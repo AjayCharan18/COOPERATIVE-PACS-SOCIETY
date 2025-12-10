@@ -2,6 +2,7 @@
 Database initialization and seeding script
 Run this to create initial data for testing
 """
+
 import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import date, timedelta
@@ -9,7 +10,11 @@ from datetime import date, timedelta
 from app.db.session import AsyncSessionLocal
 from app.models.user import User, Branch, UserRole
 from app.models.loan import LoanTypeConfig, LoanType, InterestCalculationType
-from app.models.notification import NotificationTemplate, NotificationType, NotificationPurpose
+from app.models.notification import (
+    NotificationTemplate,
+    NotificationType,
+    NotificationPurpose,
+)
 from app.core.security import get_password_hash
 
 
@@ -26,11 +31,11 @@ async def seed_data():
             pincode="500001",
             contact_number="9876543210",
             email="hyderabad@dccb.com",
-            ifsc_code="DCCB0001001"
+            ifsc_code="DCCB0001001",
         )
         db.add(branch1)
         await db.flush()
-        
+
         # Create users
         admin = User(
             email="admin@dccb.com",
@@ -41,9 +46,9 @@ async def seed_data():
             is_active=True,
             is_verified=True,
             district="Hyderabad",
-            state="Telangana"
+            state="Telangana",
         )
-        
+
         employee = User(
             email="employee@dccb.com",
             mobile="9999999998",
@@ -54,9 +59,9 @@ async def seed_data():
             is_verified=True,
             branch_id=branch1.id,
             district="Hyderabad",
-            state="Telangana"
+            state="Telangana",
         )
-        
+
         farmer = User(
             email="farmer@dccb.com",
             mobile="9999999997",
@@ -71,11 +76,11 @@ async def seed_data():
             district="Hyderabad",
             state="Telangana",
             land_area="5.5",
-            crop_type="Rice"
+            crop_type="Rice",
         )
-        
+
         db.add_all([admin, employee, farmer])
-        
+
         # Create loan type configs
         loan_types = [
             LoanTypeConfig(
@@ -87,7 +92,7 @@ async def seed_data():
                 min_amount=10000,
                 max_amount=500000,
                 interest_calculation_type=InterestCalculationType.SIMPLE,
-                requires_emi=False
+                requires_emi=False,
             ),
             LoanTypeConfig(
                 loan_type=LoanType.LONG_TERM_EMI,
@@ -98,7 +103,7 @@ async def seed_data():
                 min_amount=100000,
                 max_amount=5000000,
                 interest_calculation_type=InterestCalculationType.EMI,
-                requires_emi=True
+                requires_emi=True,
             ),
             LoanTypeConfig(
                 loan_type=LoanType.RYTHU_BANDHU,
@@ -109,7 +114,7 @@ async def seed_data():
                 min_amount=5000,
                 max_amount=200000,
                 interest_calculation_type=InterestCalculationType.SIMPLE,
-                requires_emi=False
+                requires_emi=False,
             ),
             LoanTypeConfig(
                 loan_type=LoanType.RYTHU_NETHANY,
@@ -120,7 +125,7 @@ async def seed_data():
                 min_amount=50000,
                 max_amount=3000000,
                 interest_calculation_type=InterestCalculationType.EMI,
-                requires_emi=True
+                requires_emi=True,
             ),
             LoanTypeConfig(
                 loan_type=LoanType.AMUL_LOAN,
@@ -131,12 +136,12 @@ async def seed_data():
                 min_amount=50000,
                 max_amount=1000000,
                 interest_calculation_type=InterestCalculationType.EMI,
-                requires_emi=True
-            )
+                requires_emi=True,
+            ),
         ]
-        
+
         db.add_all(loan_types)
-        
+
         # Create notification templates
         templates = [
             NotificationTemplate(
@@ -145,7 +150,7 @@ async def seed_data():
                 notification_type=NotificationType.WHATSAPP,
                 template_english="Dear {farmer_name}, Your EMI of {emi_amount} for loan {loan_number} is due on {due_date}. Please pay on time to avoid penalty.",
                 template_telugu="ప్రియమైన {farmer_name}, మీ రుణం {loan_number} కోసం {emi_amount} EMI {due_date}న చెల్లించవలసి ఉంది.",
-                subject_english="EMI Payment Reminder"
+                subject_english="EMI Payment Reminder",
             ),
             NotificationTemplate(
                 template_key="overdue_alert",
@@ -153,12 +158,12 @@ async def seed_data():
                 notification_type=NotificationType.SMS,
                 template_english="URGENT: Your loan {loan_number} is overdue by {overdue_days} days. Outstanding: {overdue_amount}. Pay immediately to avoid penalty.",
                 template_telugu="ముఖ్యం: మీ రుణం {loan_number} {overdue_days} రోజులు బకాయి ఉంది. బకాయి మొత్తం: {overdue_amount}.",
-                subject_english="Overdue Payment Alert"
-            )
+                subject_english="Overdue Payment Alert",
+            ),
         ]
-        
+
         db.add_all(templates)
-        
+
         await db.commit()
         print("✅ Database seeded successfully!")
         print("\n📝 Default credentials:")

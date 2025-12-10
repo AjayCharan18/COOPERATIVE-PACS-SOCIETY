@@ -1,12 +1,15 @@
 """Add loan type configurations to the database"""
+
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import asyncio
 from sqlalchemy import select
 from app.db.session import AsyncSessionLocal
 from app.models.loan import LoanTypeConfig, LoanType, InterestCalculationType
+
 
 async def add_loan_types():
     async with AsyncSessionLocal() as db:
@@ -14,13 +17,13 @@ async def add_loan_types():
             # Check if loan types already exist
             result = await db.execute(select(LoanTypeConfig))
             existing = result.scalars().all()
-            
+
             if existing:
                 print(f"⚠️ Found {len(existing)} existing loan types. Skipping...")
                 return
-            
+
             print("🔧 Adding loan type configurations...")
-            
+
             loan_types = [
                 {
                     "loan_type": LoanType.SAO,
@@ -35,7 +38,7 @@ async def add_loan_types():
                     "overdue_days_for_penalty": 90,
                     "requires_emi": False,
                     "emi_frequency": "monthly",
-                    "is_active": True
+                    "is_active": True,
                 },
                 {
                     "loan_type": LoanType.LONG_TERM_EMI,
@@ -50,7 +53,7 @@ async def add_loan_types():
                     "overdue_days_for_penalty": 90,
                     "requires_emi": True,
                     "emi_frequency": "monthly",
-                    "is_active": True
+                    "is_active": True,
                 },
                 {
                     "loan_type": LoanType.RYTHU_BANDHU,
@@ -65,7 +68,7 @@ async def add_loan_types():
                     "overdue_days_for_penalty": 90,
                     "requires_emi": False,
                     "emi_frequency": "monthly",
-                    "is_active": True
+                    "is_active": True,
                 },
                 {
                     "loan_type": LoanType.RYTHU_NETHANY,
@@ -80,7 +83,7 @@ async def add_loan_types():
                     "overdue_days_for_penalty": 90,
                     "requires_emi": False,
                     "emi_frequency": "monthly",
-                    "is_active": True
+                    "is_active": True,
                 },
                 {
                     "loan_type": LoanType.AMUL_LOAN,
@@ -95,37 +98,41 @@ async def add_loan_types():
                     "overdue_days_for_penalty": 90,
                     "requires_emi": True,
                     "emi_frequency": "monthly",
-                    "is_active": True
-                }
+                    "is_active": True,
+                },
             ]
-            
+
             # Add loan types to database
             for loan_type_data in loan_types:
                 config = LoanTypeConfig(**loan_type_data)
                 db.add(config)
-            
+
             await db.commit()
-            
+
             # Display created loan types
             result = await db.execute(select(LoanTypeConfig))
             configs = result.scalars().all()
-            
+
             print("\n✅ Loan types configured successfully!\n")
             print("=" * 80)
             for config in configs:
                 print(f"\n📋 {config.display_name} ({config.loan_type.value})")
                 print(f"   Interest: {config.default_interest_rate}%")
-                print(f"   Amount: ₹{config.min_amount:,.0f} - ₹{config.max_amount:,.0f}")
+                print(
+                    f"   Amount: ₹{config.min_amount:,.0f} - ₹{config.max_amount:,.0f}"
+                )
                 print(f"   Tenure: {config.default_tenure_months} months")
                 print(f"   Calculation: {config.interest_calculation_type.value}")
                 print(f"   Requires EMI: {config.requires_emi}")
             print("\n" + "=" * 80)
-            
+
         except Exception as e:
             print(f"\n❌ Error adding loan types: {e}")
             import traceback
+
             traceback.print_exc()
             await db.rollback()
+
 
 if __name__ == "__main__":
     asyncio.run(add_loan_types())

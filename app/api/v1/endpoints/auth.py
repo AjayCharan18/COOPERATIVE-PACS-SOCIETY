@@ -1,6 +1,7 @@
 """
 Authentication API endpoints
 """
+
 from fastapi import APIRouter, Depends, HTTPException, status, Form
 from fastapi.security import HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,13 +12,18 @@ from app.db.session import get_db
 from app.models.user import User, UserRole
 from app.models.loan import Loan, LoanStatus
 from app.models.payment import Payment, PaymentStatus
-from app.schemas.user import UserCreate, User as UserSchema, ChangePasswordRequest, UserUpdate
+from app.schemas.user import (
+    UserCreate,
+    User as UserSchema,
+    ChangePasswordRequest,
+    UserUpdate,
+)
 from app.schemas.token import Token
 from app.core.security import (
     verify_password,
     get_password_hash,
     create_access_token,
-    validate_password_strength
+    validate_password_strength,
 )
 from app.api.deps import get_current_user, require_admin_or_employee, require_admin
 
@@ -30,7 +36,7 @@ async def get_users(
     role: str = None,
     include_inactive: bool = False,
     current_user: User = Depends(require_admin_or_employee),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Get list of users, optionally filtered by role
@@ -39,15 +45,17 @@ async def get_users(
     Set include_inactive=true to include deactivated users
     """
     from app.models.user import UserRole
-    
-    print(f"DEBUG: Received role parameter: '{role}', include_inactive: {include_inactive}")
-    
+
+    print(
+        f"DEBUG: Received role parameter: '{role}', include_inactive: {include_inactive}"
+    )
+
     query = select(User)
-    
+
     # Filter by active status (default: only active users)
     if not include_inactive:
         query = query.where(User.is_active == True)
-    
+
     if role:
         try:
             # Convert role string to lowercase to match enum values
@@ -58,12 +66,12 @@ async def get_users(
             print(f"DEBUG: ValueError - {e}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid role: {role}. Valid roles are: admin, employee, farmer"
+                detail=f"Invalid role: {role}. Valid roles are: admin, employee, farmer",
             )
-    
+
     result = await db.execute(query)
     users = result.scalars().all()
-    
+
     return [
         {
             "id": user.id,
@@ -74,7 +82,7 @@ async def get_users(
             "role": user.role.value,
             "branch_id": user.branch_id,
             "is_active": user.is_active,
-            "created_at": user.created_at.isoformat() if user.created_at else None
+            "created_at": user.created_at.isoformat() if user.created_at else None,
         }
         for user in users
     ]
@@ -82,8 +90,7 @@ async def get_users(
 
 @router.get("/users/farmers")
 async def get_farmers(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
     """
     Get list of farmers based on role:
@@ -94,39 +101,46 @@ async def get_farmers(
     from app.models.user import UserRole
     from app.models.loan import Loan, LoanStatus
     from sqlalchemy import func
-    
+
     # Only admin and employees can access this endpoint
     if current_user.role == UserRole.FARMER:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Farmers cannot access this endpoint"
+            detail="Farmers cannot access this endpoint",
         )
-    
+
     # Query farmers with active loan count
-    query = select(
-        User,
-        func.count(Loan.id).label('active_loan_count')
-    ).outerjoin(
-        Loan, 
-        and_(
-            Loan.farmer_id == User.id,
-            Loan.status.in_([LoanStatus.ACTIVE, LoanStatus.APPROVED, LoanStatus.PENDING_APPROVAL])
+    query = (
+        select(User, func.count(Loan.id).label("active_loan_count"))
+        .outerjoin(
+            Loan,
+            and_(
+                Loan.farmer_id == User.id,
+                Loan.status.in_(
+                    [
+                        LoanStatus.ACTIVE,
+                        LoanStatus.APPROVED,
+                        LoanStatus.PENDING_APPROVAL,
+                    ]
+                ),
+            ),
         )
-    ).where(
-        User.role == UserRole.FARMER,
-        User.is_active == True  # Only show active farmers
+        .where(
+            User.role == UserRole.FARMER,
+            User.is_active == True,  # Only show active farmers
+        )
     )
-    
+
     # Employee sees only farmers in their branch
     if current_user.role == UserRole.EMPLOYEE:
         query = query.where(User.branch_id == current_user.branch_id)
     # Admin sees all farmers (no additional filter)
-    
+
     query = query.group_by(User.id).order_by(User.farmer_id)
-    
+
     result = await db.execute(query)
     farmers_with_counts = result.all()
-    
+
     return [
         {
             "id": user.id,
@@ -139,7 +153,7 @@ async def get_farmers(
             "state": user.state,
             "branch_id": user.branch_id,
             "is_active": user.is_active,
-            "active_loan_count": active_loan_count
+            "active_loan_count": active_loan_count,
         }
         for user, active_loan_count in farmers_with_counts
     ]
@@ -147,31 +161,34 @@ async def get_farmers(
 
 @router.get("/users/employees")
 async def get_employees(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
     """
     Get list of all employees
     Only accessible by Admin
     """
     from app.models.user import UserRole
-    
+
     # Only admin can access this endpoint
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only administrators can access employee list"
+            detail="Only administrators can access employee list",
         )
-    
+
     # Query all employees
-    query = select(User).where(
-        User.role == UserRole.EMPLOYEE,
-        User.is_active == True  # Only show active employees
-    ).order_by(User.created_at.desc())
-    
+    query = (
+        select(User)
+        .where(
+            User.role == UserRole.EMPLOYEE,
+            User.is_active == True,  # Only show active employees
+        )
+        .order_by(User.created_at.desc())
+    )
+
     result = await db.execute(query)
     employees = result.scalars().all()
-    
+
     return [
         {
             "id": employee.id,
@@ -181,7 +198,7 @@ async def get_employees(
             "branch_id": employee.branch_id,
             "is_active": employee.is_active,
             "created_at": employee.created_at,
-            "last_login": employee.last_login
+            "last_login": employee.last_login,
         }
         for employee in employees
     ]
@@ -191,37 +208,35 @@ async def get_employees(
 async def toggle_employee_status(
     employee_id: int,
     current_user: User = Depends(require_admin),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Activate/Deactivate employee account (Admin only)
     """
     result = await db.execute(select(User).where(User.id == employee_id))
     employee = result.scalar_one_or_none()
-    
+
     if not employee:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Employee not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found"
         )
-    
+
     if employee.role != UserRole.EMPLOYEE:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User is not an employee"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="User is not an employee"
         )
-    
+
     # Toggle status
     employee.is_active = not employee.is_active
     employee.updated_at = datetime.utcnow()
     await db.commit()
     await db.refresh(employee)
-    
+
     return {
         "id": employee.id,
         "full_name": employee.full_name,
         "is_active": employee.is_active,
-        "message": f"Employee {'activated' if employee.is_active else 'deactivated'} successfully"
+        "message": f"Employee {'activated' if employee.is_active else 'deactivated'} successfully",
     }
 
 
@@ -230,53 +245,50 @@ async def assign_employee_branch(
     employee_id: int,
     branch_id: int,
     current_user: User = Depends(require_admin),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Assign or change employee branch (Admin only)
     """
     from app.models.branch import Branch
-    
+
     # Check if employee exists
     result = await db.execute(select(User).where(User.id == employee_id))
     employee = result.scalar_one_or_none()
-    
+
     if not employee:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Employee not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found"
         )
-    
+
     if employee.role != UserRole.EMPLOYEE:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User is not an employee"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="User is not an employee"
         )
-    
+
     # Check if branch exists
     result = await db.execute(select(Branch).where(Branch.id == branch_id))
     branch = result.scalar_one_or_none()
-    
+
     if not branch:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Branch not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Branch not found"
         )
-    
+
     # Assign branch
     old_branch_id = employee.branch_id
     employee.branch_id = branch_id
     employee.updated_at = datetime.utcnow()
     await db.commit()
     await db.refresh(employee)
-    
+
     return {
         "id": employee.id,
         "full_name": employee.full_name,
         "old_branch_id": old_branch_id,
         "new_branch_id": branch_id,
         "branch_name": branch.name,
-        "message": "Branch assigned successfully"
+        "message": "Branch assigned successfully",
     }
 
 
@@ -284,7 +296,7 @@ async def assign_employee_branch(
 async def get_employee_performance(
     employee_id: int,
     current_user: User = Depends(require_admin),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Get employee performance metrics (Admin only)
@@ -293,38 +305,41 @@ async def get_employee_performance(
     # Check if employee exists
     result = await db.execute(select(User).where(User.id == employee_id))
     employee = result.scalar_one_or_none()
-    
+
     if not employee:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Employee not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found"
         )
-    
+
     # Loans processed (approved/disbursed by this employee)
     loans_query = select(
-        func.count(Loan.id).label('total_loans'),
-        func.count(case((Loan.status == LoanStatus.APPROVED, 1))).label('approved'),
-        func.count(case((Loan.status == LoanStatus.ACTIVE, 1))).label('active'),
-        func.sum(Loan.principal_amount).label('total_disbursed')
+        func.count(Loan.id).label("total_loans"),
+        func.count(case((Loan.status == LoanStatus.APPROVED, 1))).label("approved"),
+        func.count(case((Loan.status == LoanStatus.ACTIVE, 1))).label("active"),
+        func.sum(Loan.principal_amount).label("total_disbursed"),
     ).where(Loan.branch_id == employee.branch_id)
-    
+
     result = await db.execute(loans_query)
     loan_stats = result.one()
-    
+
     # Collections in their branch
-    collections_query = select(
-        func.count(Payment.id).label('payment_count'),
-        func.sum(Payment.amount).label('total_collected')
-    ).join(Loan).where(
-        and_(
-            Loan.branch_id == employee.branch_id,
-            Payment.status == PaymentStatus.COMPLETED
+    collections_query = (
+        select(
+            func.count(Payment.id).label("payment_count"),
+            func.sum(Payment.amount).label("total_collected"),
+        )
+        .join(Loan)
+        .where(
+            and_(
+                Loan.branch_id == employee.branch_id,
+                Payment.status == PaymentStatus.COMPLETED,
+            )
         )
     )
-    
+
     result = await db.execute(collections_query)
     collection_stats = result.one()
-    
+
     return {
         "employee_id": employee.id,
         "employee_name": employee.full_name,
@@ -335,43 +350,41 @@ async def get_employee_performance(
             "active_loans": loan_stats.active or 0,
             "total_disbursed": float(loan_stats.total_disbursed or 0),
             "payments_received": collection_stats.payment_count or 0,
-            "total_collected": float(collection_stats.total_collected or 0)
+            "total_collected": float(collection_stats.total_collected or 0),
         },
         "account_info": {
             "is_active": employee.is_active,
-            "last_login": employee.last_login.isoformat() if employee.last_login else None,
-            "created_at": employee.created_at.isoformat()
-        }
+            "last_login": (
+                employee.last_login.isoformat() if employee.last_login else None
+            ),
+            "created_at": employee.created_at.isoformat(),
+        },
     }
 
 
-@router.post("/register", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
-async def register(
-    user_data: UserCreate,
-    db: AsyncSession = Depends(get_db)
-):
+@router.post(
+    "/register", response_model=UserSchema, status_code=status.HTTP_201_CREATED
+)
+async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     """
     Register a new user (farmer, employee, or admin)
     """
     from app.services.notification_service import NotificationService
-    
+
     # Check if user already exists
     result = await db.execute(
         select(User).where(
-            or_(
-                User.email == user_data.email,
-                User.mobile == user_data.mobile
-            )
+            or_(User.email == user_data.email, User.mobile == user_data.mobile)
         )
     )
     existing_user = result.scalars().first()
-    
+
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User with this email or mobile already exists"
+            detail="User with this email or mobile already exists",
         )
-    
+
     # Validate Aadhaar if provided
     if user_data.aadhaar_number:
         result = await db.execute(
@@ -380,12 +393,12 @@ async def register(
         if result.scalars().first():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Aadhaar number already registered"
+                detail="Aadhaar number already registered",
             )
-    
+
     # Store the plain password before hashing (for email notification)
     plain_password = user_data.password
-    
+
     # Create user
     user = User(
         email=user_data.email,
@@ -406,16 +419,20 @@ async def register(
         preferred_language=user_data.preferred_language,
         branch_id=user_data.branch_id,
         is_active=True,
-        is_verified=False
+        is_verified=False,
     )
-    
+
     db.add(user)
     await db.commit()
     await db.refresh(user)
-    
+
     # Send credentials via email
     try:
-        role_name = "Farmer" if user.role.value == "farmer" else "Employee" if user.role.value == "employee" else "Admin"
+        role_name = (
+            "Farmer"
+            if user.role.value == "farmer"
+            else "Employee" if user.role.value == "employee" else "Admin"
+        )
         subject = f"Welcome to DCCB PACS - Your {role_name} Account Credentials"
         body = f"""
         <html>
@@ -480,27 +497,28 @@ async def register(
         </body>
         </html>
         """
-        
+
         print(f"\n{'='*80}")
         print(f"Attempting to send credentials email to: {user.email}")
         print(f"Subject: {subject}")
         print(f"{'='*80}\n")
-        
+
         await NotificationService.send_email(user.email, subject, body)
-        
+
         print(f"\n{'='*80}")
         print(f"✅ Email sent successfully to: {user.email}")
         print(f"{'='*80}\n")
-        
+
     except Exception as e:
         print(f"\n{'='*80}")
         print(f"❌ Failed to send credentials email to {user.email}")
         print(f"Error: {str(e)}")
         import traceback
+
         print(traceback.format_exc())
         print(f"{'='*80}\n")
         # Don't fail the registration if email fails
-    
+
     return user
 
 
@@ -508,7 +526,7 @@ async def register(
 async def login(
     username: str = Form(...),
     password: str = Form(...),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Login with email/mobile and password
@@ -516,52 +534,40 @@ async def login(
     """
     # Find user by email or mobile
     result = await db.execute(
-        select(User).where(
-            or_(
-                User.email == username,
-                User.mobile == username
-            )
-        )
+        select(User).where(or_(User.email == username, User.mobile == username))
     )
     user = result.scalar_one_or_none()
-    
+
     if not user or not verify_password(password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User account is inactive"
+            status_code=status.HTTP_403_FORBIDDEN, detail="User account is inactive"
         )
-    
+
     # Update last login
     user.last_login = datetime.utcnow()
     await db.commit()
-    
+
     # Create access token
     access_token = create_access_token(
-        data={
-            "user_id": user.id,
-            "email": user.email,
-            "role": user.role.value
-        }
+        data={"user_id": user.id, "email": user.email, "role": user.role.value}
     )
-    
+
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "expires_in": None  # Non-expiring token
+        "expires_in": None,  # Non-expiring token
     }
 
 
 @router.get("/me", response_model=UserSchema)
-async def get_current_user_info(
-    current_user: User = Depends(get_current_user)
-):
+async def get_current_user_info(current_user: User = Depends(get_current_user)):
     """Get current logged-in user information"""
     return current_user
 
@@ -570,20 +576,20 @@ async def get_current_user_info(
 async def update_current_user(
     user_update: UserUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Update current user profile"""
-    
+
     # Update fields if provided
     update_data = user_update.dict(exclude_unset=True)
-    
+
     for field, value in update_data.items():
         setattr(current_user, field, value)
-    
+
     current_user.updated_at = datetime.utcnow()
     await db.commit()
     await db.refresh(current_user)
-    
+
     return current_user
 
 
@@ -591,21 +597,20 @@ async def update_current_user(
 async def change_password(
     password_data: ChangePasswordRequest,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Change password for current user"""
-    
+
     # Verify old password
     if not verify_password(password_data.old_password, current_user.hashed_password):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Incorrect current password"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect current password"
         )
-    
+
     # Update password
     current_user.hashed_password = get_password_hash(password_data.new_password)
     await db.commit()
-    
+
     return {"message": "Password changed successfully"}
 
 
@@ -622,11 +627,9 @@ async def logout(current_user: User = Depends(get_current_user)):
 # OTP-BASED PASSWORD RESET (Email & SMS)
 # ============================================================================
 
+
 @router.post("/forgot-password")
-async def forgot_password(
-    request: dict,
-    db: AsyncSession = Depends(get_db)
-):
+async def forgot_password(request: dict, db: AsyncSession = Depends(get_db)):
     """
     Initiate password reset - Send OTP via Email or SMS
     Request body: {
@@ -635,32 +638,28 @@ async def forgot_password(
     }
     """
     from app.services.otp_service import OTPService
-    
+
     identifier = request.get("identifier")
     method = request.get("method", "email")
-    
+
     if not identifier:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email or mobile number is required"
+            detail="Email or mobile number is required",
         )
-    
+
     result = await OTPService.initiate_password_reset(db, identifier, method)
-    
+
     if not result["success"]:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=result["message"]
+            status_code=status.HTTP_400_BAD_REQUEST, detail=result["message"]
         )
-    
+
     return result
 
 
 @router.post("/verify-otp-reset-password")
-async def verify_otp_and_reset(
-    request: dict,
-    db: AsyncSession = Depends(get_db)
-):
+async def verify_otp_and_reset(request: dict, db: AsyncSession = Depends(get_db)):
     """
     Verify OTP and reset password
     Request body: {
@@ -670,38 +669,31 @@ async def verify_otp_and_reset(
     }
     """
     from app.services.otp_service import OTPService
-    
+
     identifier = request.get("identifier")
     otp = request.get("otp")
     new_password = request.get("new_password")
-    
+
     if not all([identifier, otp, new_password]):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="identifier, otp, and new_password are required"
+            detail="identifier, otp, and new_password are required",
         )
-    
+
     result = await OTPService.verify_otp_and_reset_password(
         db, identifier, otp, new_password
     )
-    
+
     if not result["success"]:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=result["message"]
+            status_code=status.HTTP_400_BAD_REQUEST, detail=result["message"]
         )
-    
-    return {
-        "message": "Password reset successful",
-        "success": True
-    }
+
+    return {"message": "Password reset successful", "success": True}
 
 
 @router.post("/resend-otp")
-async def resend_otp(
-    request: dict,
-    db: AsyncSession = Depends(get_db)
-):
+async def resend_otp(request: dict, db: AsyncSession = Depends(get_db)):
     """
     Resend OTP for password reset
     Request body: {
@@ -710,24 +702,23 @@ async def resend_otp(
     }
     """
     from app.services.otp_service import OTPService
-    
+
     identifier = request.get("identifier")
     method = request.get("method", "email")
-    
+
     if not identifier:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email or mobile number is required"
+            detail="Email or mobile number is required",
         )
-    
+
     result = await OTPService.resend_otp(db, identifier, method)
-    
+
     if not result["success"]:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=result["message"]
+            status_code=status.HTTP_400_BAD_REQUEST, detail=result["message"]
         )
-    
+
     return result
 
 
@@ -735,11 +726,12 @@ async def resend_otp(
 # EMPLOYEE CREATES FARMER ACCOUNT
 # ============================================================================
 
+
 @router.post("/create-farmer-account")
 async def create_farmer_account(
     farmer_data: dict,
     current_user: User = Depends(require_admin_or_employee),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Employee/Admin creates farmer account with auto-generated password
@@ -747,51 +739,53 @@ async def create_farmer_account(
     """
     import traceback
     import sys
+
     try:
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("CREATE FARMER DEBUG INFO:")
         print(f"farmer_data received: {farmer_data}")
         print(f"current_user: {current_user.email} (role: {current_user.role})")
-        print("="*80 + "\n")
+        print("=" * 80 + "\n")
         sys.stdout.flush()
-        
+
         from app.services.otp_service import OTPService
         import secrets
-        
+
         # Check if user already exists
         result = await db.execute(
             select(User).where(
                 or_(
                     User.email == farmer_data.get("email"),
-                    User.mobile == farmer_data.get("mobile")
+                    User.mobile == farmer_data.get("mobile"),
                 )
             )
         )
         existing_user = result.scalar_one_or_none()
-        
+
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User with this email or mobile already exists"
+                detail="User with this email or mobile already exists",
             )
-        
+
         # Generate farmer_id (FMR + 4 digits)
         # Get the count of existing farmers to generate next ID
         farmer_count_result = await db.execute(
-            select(User).where(User.role == 'farmer')
+            select(User).where(User.role == "farmer")
         )
         farmer_count = len(farmer_count_result.scalars().all())
         farmer_id = f"FMR{farmer_count + 1:04d}"  # FMR0001, FMR0002, etc.
-        
+
         # Generate temporary password
         temp_password = secrets.token_urlsafe(12)[:12]  # 12 character password
-        
+
         # Helper function to convert empty strings to None
         def get_or_none(value):
             return value if value and value.strip() else None
-        
+
         # Create farmer account
         from app.models.user import UserRole
+
         new_farmer = User(
             farmer_id=farmer_id,
             email=farmer_data.get("email"),
@@ -809,19 +803,20 @@ async def create_farmer_account(
             land_area=get_or_none(farmer_data.get("land_area")),
             crop_type=get_or_none(farmer_data.get("crop_type")),
             branch_id=farmer_data.get("branch_id") or current_user.branch_id,
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
         )
-        
+
         db.add(new_farmer)
         await db.commit()
         await db.refresh(new_farmer)
-        
+
         # Send credentials via email/SMS
         send_via = farmer_data.get("send_credentials_via", "email")
-        
+
         # Send via email
         if send_via in ["email", "both"]:
             from app.services.notification_service import NotificationService
+
             email_body = f"""
             <html>
             <body>
@@ -844,28 +839,30 @@ async def create_farmer_account(
             </body>
             </html>
             """
-            
+
             try:
                 await NotificationService.send_email(
                     to_email=new_farmer.email,
                     subject="Your COOPERATIVE PACS Loan Account Credentials",
-                    body=email_body
+                    body=email_body,
                 )
             except Exception as e:
                 pass  # Continue even if email fails
-        
+
         # Send via SMS
         if send_via in ["sms", "both"]:
             from app.services.notification_service import NotificationService
+
             sms_message = f"Welcome to COOPERATIVE PACS Loan! Farmer ID: {new_farmer.farmer_id}. Login credentials - Email: {new_farmer.email}, Password: {temp_password}. Please change password after login. Login at: http://localhost:5173"
-            
+
             try:
                 await NotificationService.send_sms(new_farmer.mobile, sms_message)
             except Exception as e:
                 pass  # Continue even if SMS fails
-        
+
         # Return user data with temporary password
         from pydantic import BaseModel
+
         class FarmerCreationResponse(BaseModel):
             id: int
             farmer_id: str
@@ -874,10 +871,10 @@ async def create_farmer_account(
             full_name: str
             role: str
             temporary_password: str
-            
+
             class Config:
                 from_attributes = True
-        
+
         return {
             "id": new_farmer.id,
             "farmer_id": new_farmer.farmer_id,
@@ -885,18 +882,18 @@ async def create_farmer_account(
             "mobile": new_farmer.mobile,
             "full_name": new_farmer.full_name,
             "role": new_farmer.role.value,
-            "temporary_password": temp_password
+            "temporary_password": temp_password,
         }
-    
+
     except Exception as e:
         import traceback
-        print("\n" + "="*80)
+
+        print("\n" + "=" * 80)
         print("ERROR in create_farmer_account:")
         print(traceback.format_exc())
-        print("="*80 + "\n")
+        print("=" * 80 + "\n")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
 
 
@@ -905,42 +902,42 @@ async def delete_user(
     user_id: int,
     force: bool = False,
     current_user: User = Depends(require_admin_or_employee),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Delete a user (soft delete by deactivating)
     Admin/Employee only
-    
+
     - force=False (default): Prevents deletion if user has active/pending loans
     - force=True: Allows deletion and automatically rejects all pending loans, closes active loans
     """
     # Get the user
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
-    
+
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
-    
+
     # Don't allow deleting yourself
     if user.id == current_user.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete your own account"
+            detail="Cannot delete your own account",
         )
-    
+
     # Check if user has active loans
     from app.models.loan import Loan, LoanStatus
+
     loan_result = await db.execute(
         select(Loan).where(
             Loan.farmer_id == user_id,
-            Loan.status.in_([LoanStatus.ACTIVE, LoanStatus.PENDING_APPROVAL])
+            Loan.status.in_([LoanStatus.ACTIVE, LoanStatus.PENDING_APPROVAL]),
         )
     )
     active_loans = loan_result.scalars().all()
-    
+
     if active_loans and not force:
         # Provide detailed information about the loans
         loan_details = [
@@ -948,7 +945,7 @@ async def delete_user(
                 "loan_number": loan.loan_number,
                 "status": loan.status.value,
                 "amount": float(loan.principal_amount),
-                "type": loan.loan_type.value
+                "type": loan.loan_type.value,
             }
             for loan in active_loans
         ]
@@ -957,10 +954,10 @@ async def delete_user(
             detail={
                 "message": f"Cannot delete user with {len(active_loans)} active/pending loan(s).",
                 "loans": loan_details,
-                "suggestion": "Please reject or close these loans first, or use force=true to automatically handle them."
-            }
+                "suggestion": "Please reject or close these loans first, or use force=true to automatically handle them.",
+            },
         )
-    
+
     # If force=True and there are active loans, handle them
     if active_loans and force:
         for loan in active_loans:
@@ -970,15 +967,15 @@ async def delete_user(
             elif loan.status == LoanStatus.ACTIVE:
                 loan.status = LoanStatus.CLOSED
                 # Note: In production, you'd want to handle outstanding amounts properly
-        
+
         await db.commit()
-    
+
     # Soft delete - deactivate the user
     user.is_active = False
     await db.commit()
-    
+
     message = "User deleted successfully"
     if active_loans and force:
         message += f" ({len(active_loans)} loan(s) automatically handled)"
-    
+
     return {"message": message, "user_id": user_id}

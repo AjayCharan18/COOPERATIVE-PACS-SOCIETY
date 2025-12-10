@@ -2,6 +2,7 @@
 Admin System Configuration API endpoints
 Manage loan types, interest rates, penalties, and global settings
 """
+
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
@@ -51,22 +52,21 @@ class LoanTypeConfigResponse(BaseModel):
     min_land_area: Optional[float]
     eligible_crops: Optional[str]
     is_active: bool
-    
+
     class Config:
         from_attributes = True
 
 
 @router.get("/loan-types", response_model=List[LoanTypeConfigResponse])
 async def get_all_loan_type_configs(
-    current_user: User = Depends(require_admin),
-    db: AsyncSession = Depends(get_db)
+    current_user: User = Depends(require_admin), db: AsyncSession = Depends(get_db)
 ):
     """
     Get all loan type configurations (Admin only)
     """
     result = await db.execute(select(LoanTypeConfig))
     configs = result.scalars().all()
-    
+
     return [
         LoanTypeConfigResponse(
             id=config.id,
@@ -84,7 +84,7 @@ async def get_all_loan_type_configs(
             emi_frequency=config.emi_frequency,
             min_land_area=config.min_land_area,
             eligible_crops=config.eligible_crops,
-            is_active=config.is_active
+            is_active=config.is_active,
         )
         for config in configs
     ]
@@ -94,7 +94,7 @@ async def get_all_loan_type_configs(
 async def get_loan_type_config(
     loan_type: LoanType,
     current_user: User = Depends(require_admin),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Get specific loan type configuration (Admin only)
@@ -103,13 +103,13 @@ async def get_loan_type_config(
         select(LoanTypeConfig).where(LoanTypeConfig.loan_type == loan_type)
     )
     config = result.scalar_one_or_none()
-    
+
     if not config:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Configuration for loan type {loan_type.value} not found"
+            detail=f"Configuration for loan type {loan_type.value} not found",
         )
-    
+
     return LoanTypeConfigResponse(
         id=config.id,
         loan_type=config.loan_type.value,
@@ -126,7 +126,7 @@ async def get_loan_type_config(
         emi_frequency=config.emi_frequency,
         min_land_area=config.min_land_area,
         eligible_crops=config.eligible_crops,
-        is_active=config.is_active
+        is_active=config.is_active,
     )
 
 
@@ -135,7 +135,7 @@ async def update_loan_type_config(
     loan_type: LoanType,
     config_update: LoanTypeConfigUpdate,
     current_user: User = Depends(require_admin),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Update loan type configuration (Admin only)
@@ -144,25 +144,25 @@ async def update_loan_type_config(
         select(LoanTypeConfig).where(LoanTypeConfig.loan_type == loan_type)
     )
     config = result.scalar_one_or_none()
-    
+
     if not config:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Configuration for loan type {loan_type.value} not found"
+            detail=f"Configuration for loan type {loan_type.value} not found",
         )
-    
+
     # Update only provided fields
     update_data = config_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(config, field, value)
-    
+
     await db.commit()
     await db.refresh(config)
-    
+
     return {
         "message": f"Loan type {loan_type.value} configuration updated successfully",
         "loan_type": loan_type.value,
-        "updated_fields": list(update_data.keys())
+        "updated_fields": list(update_data.keys()),
     }
 
 
@@ -170,7 +170,7 @@ async def update_loan_type_config(
 async def toggle_loan_type_status(
     loan_type: LoanType,
     current_user: User = Depends(require_admin),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Activate/Deactivate a loan type (Admin only)
@@ -179,27 +179,28 @@ async def toggle_loan_type_status(
         select(LoanTypeConfig).where(LoanTypeConfig.loan_type == loan_type)
     )
     config = result.scalar_one_or_none()
-    
+
     if not config:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Configuration for loan type {loan_type.value} not found"
+            detail=f"Configuration for loan type {loan_type.value} not found",
         )
-    
+
     config.is_active = not config.is_active
     await db.commit()
     await db.refresh(config)
-    
+
     return {
         "message": f"Loan type {loan_type.value} {'activated' if config.is_active else 'deactivated'} successfully",
         "loan_type": loan_type.value,
-        "is_active": config.is_active
+        "is_active": config.is_active,
     }
 
 
 # Global system settings
 class SystemSettingsResponse(BaseModel):
     """Current system-wide settings"""
+
     interest_accrual_enabled: bool = True
     daily_accrual_time: str = "00:00"
     overdue_notification_enabled: bool = True
@@ -214,8 +215,7 @@ class SystemSettingsResponse(BaseModel):
 
 @router.get("/system-settings", response_model=SystemSettingsResponse)
 async def get_system_settings(
-    current_user: User = Depends(require_admin),
-    db: AsyncSession = Depends(get_db)
+    current_user: User = Depends(require_admin), db: AsyncSession = Depends(get_db)
 ):
     """
     Get current system settings (Admin only)
@@ -229,7 +229,7 @@ async def get_system_settings(
 async def update_system_settings(
     settings: SystemSettingsResponse,
     current_user: User = Depends(require_admin),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Update system settings (Admin only)
@@ -238,21 +238,20 @@ async def update_system_settings(
     """
     return {
         "message": "System settings updated successfully",
-        "settings": settings.model_dump()
+        "settings": settings.model_dump(),
     }
 
 
 @router.get("/interest-rates/summary")
 async def get_interest_rate_summary(
-    current_user: User = Depends(require_admin),
-    db: AsyncSession = Depends(get_db)
+    current_user: User = Depends(require_admin), db: AsyncSession = Depends(get_db)
 ):
     """
     Get summary of all interest rates across loan types (Admin only)
     """
     result = await db.execute(select(LoanTypeConfig))
     configs = result.scalars().all()
-    
+
     return {
         "loan_types": [
             {
@@ -260,21 +259,26 @@ async def get_interest_rate_summary(
                 "display_name": config.display_name,
                 "default_interest_rate": config.default_interest_rate,
                 "penal_interest_rate": config.penal_interest_rate,
-                "total_rate_if_overdue": config.default_interest_rate + config.penal_interest_rate,
-                "is_active": config.is_active
+                "total_rate_if_overdue": config.default_interest_rate
+                + config.penal_interest_rate,
+                "is_active": config.is_active,
             }
             for config in configs
         ],
-        "interest_calculation_methods": list(set(config.interest_calculation_type.value for config in configs)),
-        "generated_at": "now"
+        "interest_calculation_methods": list(
+            set(config.interest_calculation_type.value for config in configs)
+        ),
+        "generated_at": "now",
     }
 
 
 @router.post("/interest-rates/bulk-update")
 async def bulk_update_interest_rates(
-    rate_adjustment_percentage: float = Query(..., ge=-50, le=50, description="Percentage adjustment (+/-50%)"),
+    rate_adjustment_percentage: float = Query(
+        ..., ge=-50, le=50, description="Percentage adjustment (+/-50%)"
+    ),
     current_user: User = Depends(require_admin),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Bulk update all interest rates by a percentage (Admin only)
@@ -283,27 +287,29 @@ async def bulk_update_interest_rates(
     """
     result = await db.execute(select(LoanTypeConfig))
     configs = result.scalars().all()
-    
+
     updated_configs = []
     for config in configs:
         old_rate = config.default_interest_rate
         adjustment_factor = 1 + (rate_adjustment_percentage / 100)
         new_rate = old_rate * adjustment_factor
-        
+
         # Ensure rate stays within reasonable bounds (1% to 50%)
         new_rate = max(1.0, min(50.0, new_rate))
-        
+
         config.default_interest_rate = round(new_rate, 2)
-        updated_configs.append({
-            "loan_type": config.loan_type.value,
-            "old_rate": old_rate,
-            "new_rate": config.default_interest_rate
-        })
-    
+        updated_configs.append(
+            {
+                "loan_type": config.loan_type.value,
+                "old_rate": old_rate,
+                "new_rate": config.default_interest_rate,
+            }
+        )
+
     await db.commit()
-    
+
     return {
         "message": f"All interest rates adjusted by {rate_adjustment_percentage}%",
         "updated_count": len(updated_configs),
-        "details": updated_configs
+        "details": updated_configs,
     }

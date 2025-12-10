@@ -1,6 +1,7 @@
 """
 Pydantic schemas for Payment models
 """
+
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import date, datetime
@@ -45,13 +46,14 @@ class Payment(PaymentBase):
     is_reconciled: bool
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True
 
 
 class PaymentReceipt(BaseModel):
     """Receipt data for PDF generation"""
+
     receipt_number: str
     transaction_id: str
     payment_date: date
@@ -81,13 +83,14 @@ class LoanLedgerEntry(BaseModel):
     total_outstanding: float
     narration: str
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
 
 class LoanLedgerSummary(BaseModel):
     """Ledger summary with all entries"""
+
     loan_number: str
     farmer_name: str
     principal_amount: float

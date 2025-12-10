@@ -1,6 +1,7 @@
 """
 Celery configuration for background tasks
 """
+
 from celery import Celery
 from app.core.config import settings
 
@@ -11,8 +12,8 @@ celery_app = Celery(
     include=[
         "app.tasks.notifications",
         "app.tasks.interest_calculation",
-        "app.tasks.reports"
-    ]
+        "app.tasks.reports",
+    ],
 )
 
 # Celery configuration
@@ -34,17 +35,17 @@ celery_app.conf.beat_schedule = {
     "send-emi-reminders-daily": {
         "task": "app.tasks.notifications.send_emi_reminders",
         "schedule": 86400.0,  # Every 24 hours
-        "options": {"expires": 3600}
+        "options": {"expires": 3600},
     },
     "calculate-daily-interest": {
         "task": "app.tasks.interest_calculation.calculate_daily_interest",
         "schedule": 86400.0,  # Every 24 hours at midnight
-        "options": {"expires": 3600}
+        "options": {"expires": 3600},
     },
     "check-overdue-loans": {
         "task": "app.tasks.notifications.check_overdue_loans",
         "schedule": 86400.0,  # Every 24 hours
-        "options": {"expires": 3600}
+        "options": {"expires": 3600},
     },
 }
 

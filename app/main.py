@@ -1,6 +1,7 @@
 """
 Main FastAPI application entry point for COOPERATIVE PACS - Loan Management System
 """
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -19,7 +20,7 @@ app = FastAPI(
     description="AI-Powered Loan Management System for COOPERATIVE PACS Banks",
     version="1.0.0",
     docs_url="/docs" if settings.ENVIRONMENT == "development" else None,
-    redoc_url="/redoc" if settings.ENVIRONMENT == "development" else None
+    redoc_url="/redoc" if settings.ENVIRONMENT == "development" else None,
 )
 
 # CORS Configuration
@@ -49,7 +50,7 @@ async def startup_event():
     # if settings.ENVIRONMENT == "development":
     #     async with engine.begin() as conn:
     #         await conn.run_sync(Base.metadata.create_all)
-    
+
     print(f"🚀 {settings.APP_NAME} started successfully!")
     print(f"📝 Environment: {settings.ENVIRONMENT}")
     print(f"📚 API Docs: http://localhost:8000/docs")
@@ -68,7 +69,7 @@ async def root():
         "message": "Welcome to COOPERATIVE PACS Loan Management System",
         "version": "1.0.0",
         "docs": "/docs",
-        "status": "running"
+        "status": "running",
     }
 
 
@@ -83,19 +84,17 @@ async def health_check():
             "environment": settings.ENVIRONMENT,
             "timestamp": datetime.utcnow().isoformat(),
             "app": settings.APP_NAME,
-            "services": {
-                "api": "operational",
-                "database": "connected"
-            }
-        }
+            "services": {"api": "operational", "database": "connected"},
+        },
     )
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
         port=8000,
-        reload=settings.ENVIRONMENT == "development"
+        reload=settings.ENVIRONMENT == "development",
     )

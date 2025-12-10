@@ -1,6 +1,7 @@
 """
 Pydantic schemas for Loan models
 """
+
 from pydantic import BaseModel, Field, validator
 from typing import Optional, List
 from datetime import date, datetime
@@ -16,7 +17,9 @@ class LoanTypeConfigBase(BaseModel):
     default_tenure_months: int = Field(..., gt=0)
     min_amount: float = Field(default=0.0, ge=0)
     max_amount: Optional[float] = Field(None, gt=0)
-    interest_calculation_type: InterestCalculationType = InterestCalculationType.PRORATA_DAILY
+    interest_calculation_type: InterestCalculationType = (
+        InterestCalculationType.PRORATA_DAILY
+    )
     penal_interest_rate: float = Field(default=2.0, ge=0)
     overdue_days_for_penalty: int = Field(default=90, gt=0)
     requires_emi: bool = False
@@ -45,7 +48,7 @@ class LoanTypeConfig(LoanTypeConfigBase):
     is_active: bool
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -67,7 +70,9 @@ class LoanCreate(LoanBase):
     sanction_date: date
     first_emi_date: Optional[date] = None
     penal_interest_rate: Optional[float] = Field(default=2.0, ge=0)
-    interest_calculation_type: InterestCalculationType = InterestCalculationType.PRORATA_DAILY
+    interest_calculation_type: InterestCalculationType = (
+        InterestCalculationType.PRORATA_DAILY
+    )
     subsidy_scheme: Optional[str] = None
 
 
@@ -118,21 +123,23 @@ class Loan(LoanBase):
     is_rescheduled: bool
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True
 
 
 class LoanDetail(Loan):
     """Extended loan info with relationships"""
+
     farmer_name: Optional[str] = None
     branch_name: Optional[str] = None
     approved_by_name: Optional[str] = None
-    emi_schedule: List['EMISchedule'] = []
+    emi_schedule: List["EMISchedule"] = []
 
 
 class LoanSummary(BaseModel):
     """Summary statistics for loans"""
+
     total_loans: int
     active_loans: int
     total_disbursed: float
@@ -163,13 +170,14 @@ class EMISchedule(EMIScheduleBase):
     is_overdue: bool
     overdue_days: int
     penal_interest: float
-    
+
     class Config:
         from_attributes = True
 
 
 class LoanWithSchedule(Loan):
     """Loan with EMI schedule"""
+
     emi_schedule: List[EMISchedule] = []
 
 

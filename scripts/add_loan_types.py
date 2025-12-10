@@ -1,6 +1,7 @@
 """
 Script to add loan type configurations based on the requirements
 """
+
 import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -15,11 +16,13 @@ async def add_loan_types():
         # Check if loan types already exist
         result = await db.execute(select(LoanTypeConfig))
         existing = result.scalars().all()
-        
+
         if existing:
-            print("⚠️  Loan types already exist. Skipping deletion to preserve foreign key relationships.")
+            print(
+                "⚠️  Loan types already exist. Skipping deletion to preserve foreign key relationships."
+            )
             print("   Please update loan types manually through the API if needed.\n")
-            
+
             # Display existing loan types
             print("=" * 80)
             for config in existing:
@@ -30,7 +33,7 @@ async def add_loan_types():
                 print(f"   Calculation: {config.interest_calculation_type.value}")
             print("\n" + "=" * 80)
             return
-        
+
         # Define loan types based on the image
         loan_types = [
             {
@@ -49,7 +52,7 @@ async def add_loan_types():
                 "processing_fee_percentage": 0.5,
                 "penal_interest_rate": 2.0,
                 "grace_period_days": 0,
-                "is_active": True
+                "is_active": True,
             },
             {
                 "loan_type": LoanType.LONG_TERM_EMI,
@@ -67,7 +70,7 @@ async def add_loan_types():
                 "processing_fee_percentage": 1.0,
                 "penal_interest_rate": 2.0,
                 "grace_period_days": 0,
-                "is_active": True
+                "is_active": True,
             },
             {
                 "loan_type": LoanType.RYTHU_BANDHU,
@@ -85,7 +88,7 @@ async def add_loan_types():
                 "processing_fee_percentage": 0.5,
                 "penal_interest_rate": 2.0,
                 "grace_period_days": 0,
-                "is_active": True
+                "is_active": True,
             },
             {
                 "loan_type": LoanType.RYTHU_NETHANY,
@@ -103,7 +106,7 @@ async def add_loan_types():
                 "processing_fee_percentage": 0.5,
                 "penal_interest_rate": 2.0,
                 "grace_period_days": 0,
-                "is_active": True
+                "is_active": True,
             },
             {
                 "loan_type": LoanType.AMUL_LOAN,
@@ -121,29 +124,33 @@ async def add_loan_types():
                 "processing_fee_percentage": 0.5,
                 "penal_interest_rate": 2.0,
                 "grace_period_days": 0,
-                "is_active": True
-            }
+                "is_active": True,
+            },
         ]
-        
+
         # Add loan types to database
         for loan_type_data in loan_types:
             config = LoanTypeConfig(**loan_type_data)
             db.add(config)
-        
+
         await db.commit()
-        
+
         # Display created loan types
         result = await db.execute(select(LoanTypeConfig))
         configs = result.scalars().all()
-        
+
         print("\n✅ Loan types configured successfully!\n")
         print("=" * 80)
         for config in configs:
             print(f"\n📋 {config.name} ({config.loan_type.value})")
-            print(f"   Interest: {config.interest_rate_up_to_1_year}% (≤1 year), "
-                  f"{config.interest_rate_above_1_year}% (>1 year)")
+            print(
+                f"   Interest: {config.interest_rate_up_to_1_year}% (≤1 year), "
+                f"{config.interest_rate_above_1_year}% (>1 year)"
+            )
             print(f"   Amount: ₹{config.min_amount:,} - ₹{config.max_amount:,}")
-            print(f"   Tenure: {config.min_tenure_months} - {config.max_tenure_months} months")
+            print(
+                f"   Tenure: {config.min_tenure_months} - {config.max_tenure_months} months"
+            )
             print(f"   Calculation: {config.interest_calculation_type.value}")
         print("\n" + "=" * 80)
 

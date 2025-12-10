@@ -1,6 +1,7 @@
 """
 Script to add initial branches
 """
+
 import sys
 from pathlib import Path
 
@@ -17,38 +18,38 @@ from app.core.config import settings
 async def add_branches():
     engine = create_async_engine(settings.DATABASE_URL)
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    
+
     async with async_session() as session:
         branches = [
             Branch(
                 id=1,
-                name='Main Branch',
-                code='MB001',
-                address='Main Road, Hyderabad',
-                district='Hyderabad',
-                state='Telangana',
-                is_active=True
+                name="Main Branch",
+                code="MB001",
+                address="Main Road, Hyderabad",
+                district="Hyderabad",
+                state="Telangana",
+                is_active=True,
             ),
             Branch(
                 id=3,
-                name='Warangal Branch',
-                code='WGL001',
-                address='Station Road, Warangal',
-                district='Warangal',
-                state='Telangana',
-                is_active=True
+                name="Warangal Branch",
+                code="WGL001",
+                address="Station Road, Warangal",
+                district="Warangal",
+                state="Telangana",
+                is_active=True,
             ),
             Branch(
                 id=4,
-                name='Karimnagar Branch',
-                code='KMR001',
-                address='Market Street, Karimnagar',
-                district='Karimnagar',
-                state='Telangana',
-                is_active=True
-            )
+                name="Karimnagar Branch",
+                code="KMR001",
+                address="Market Street, Karimnagar",
+                district="Karimnagar",
+                state="Telangana",
+                is_active=True,
+            ),
         ]
-        
+
         session.add_all(branches)
         await session.commit()
         print("✅ Branches created successfully")

@@ -1,6 +1,7 @@
 """
 Add farmer_id column to users table
 """
+
 import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
@@ -13,20 +14,28 @@ async def add_farmer_id_column():
     async with AsyncSessionLocal() as db:
         try:
             # Add column if it doesn't exist
-            await db.execute(text("""
+            await db.execute(
+                text(
+                    """
                 ALTER TABLE users 
                 ADD COLUMN IF NOT EXISTS farmer_id VARCHAR(20) UNIQUE
-            """))
-            
+            """
+                )
+            )
+
             # Create index
-            await db.execute(text("""
+            await db.execute(
+                text(
+                    """
                 CREATE UNIQUE INDEX IF NOT EXISTS ix_users_farmer_id 
                 ON users (farmer_id)
-            """))
-            
+            """
+                )
+            )
+
             await db.commit()
             print("✅ farmer_id column added successfully!")
-            
+
         except Exception as e:
             await db.rollback()
             print(f"❌ Error: {e}")

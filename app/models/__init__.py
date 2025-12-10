@@ -1,6 +1,7 @@
 """
 Import all models for Alembic
 """
+
 from app.db.base import Base
 from app.models.user import User, Branch
 from app.models.loan import Loan, LoanTypeConfig, EMISchedule
@@ -21,5 +22,5 @@ __all__ = [
     "NotificationTemplate",
     "AccrualJob",
     "CalculationCache",
-    "AuditLog"
+    "AuditLog",
 ]

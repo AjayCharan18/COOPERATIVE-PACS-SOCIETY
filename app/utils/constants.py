@@ -9,7 +9,7 @@ LOAN_TYPE_NAMES = {
     "rythu_bandhu": "Rythu Bandhu Scheme",
     "rythu_nethany": "Rythu Nethany (10 years)",
     "amul_loan": "Amul Dairy Loan (10 months)",
-    "custom": "Custom Loan"
+    "custom": "Custom Loan",
 }
 
 # Interest Calculation Methods
@@ -17,7 +17,7 @@ INTEREST_METHODS = {
     "simple": "Simple Interest",
     "compound": "Compound Interest",
     "prorata_daily": "Pro-rata Daily Interest",
-    "emi": "EMI (Reducing Balance)"
+    "emi": "EMI (Reducing Balance)",
 }
 
 # Payment Modes
@@ -30,7 +30,7 @@ PAYMENT_MODES = {
     "upi": "UPI",
     "debit_card": "Debit Card",
     "credit_card": "Credit Card",
-    "net_banking": "Net Banking"
+    "net_banking": "Net Banking",
 }
 
 # Status Colors for UI
@@ -41,7 +41,7 @@ STATUS_COLORS = {
     "closed": "gray",
     "defaulted": "red",
     "rejected": "red",
-    "rescheduled": "purple"
+    "rescheduled": "purple",
 }
 
 # Supported Languages
@@ -49,7 +49,7 @@ LANGUAGES = {
     "english": "English",
     "telugu": "తెలుగు",
     "kannada": "ಕನ್ನಡ",
-    "hindi": "हिंदी"
+    "hindi": "हिंदी",
 }
 
 # Date Formats
@@ -64,7 +64,7 @@ CURRENCY_FORMAT = "₹{:,.2f}"
 RISK_CATEGORIES = {
     "LOW": {"min": 0, "max": 30, "color": "green"},
     "MEDIUM": {"min": 30, "max": 60, "color": "yellow"},
-    "HIGH": {"min": 60, "max": 100, "color": "red"}
+    "HIGH": {"min": 60, "max": 100, "color": "red"},
 }
 
 # Default Page Sizes

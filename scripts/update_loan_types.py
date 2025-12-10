@@ -2,6 +2,7 @@
 Script to update loan type configurations with new interest rates
 Based on the handwritten requirements
 """
+
 import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
@@ -14,7 +15,7 @@ async def update_loan_types():
     """Update loan type configurations with new interest rates"""
     async with AsyncSessionLocal() as db:
         print("\n🔄 Updating loan type configurations...\n")
-        
+
         # Update STD (SAO) - 7% up to 1 year, 13.45% above 1 year
         await db.execute(
             update(LoanTypeConfig)
@@ -25,11 +26,11 @@ async def update_loan_types():
                 default_interest_rate=7.0,
                 min_amount=1000,
                 max_amount=500000,
-                default_tenure_months=12
+                default_tenure_months=12,
             )
         )
         print("✅ Updated: Short Term (STD) - 7% (≤1 year), 13.45% (>1 year)")
-        
+
         # Update Long Term EMI - 12% first year, 0.75% after (9 years)
         await db.execute(
             update(LoanTypeConfig)
@@ -40,11 +41,11 @@ async def update_loan_types():
                 default_interest_rate=12.0,
                 min_amount=50000,
                 max_amount=5000000,
-                default_tenure_months=108  # 9 years
+                default_tenure_months=108,  # 9 years
             )
         )
         print("✅ Updated: Long Term EMI - 12% (1st year), 0.75% (after)")
-        
+
         # Update Rythu Bandh - 12.50% up to 1 year, 14.50% above (10 years EMI)
         await db.execute(
             update(LoanTypeConfig)
@@ -55,11 +56,11 @@ async def update_loan_types():
                 default_interest_rate=12.50,
                 min_amount=10000,
                 max_amount=1000000,
-                default_tenure_months=120  # 10 years
+                default_tenure_months=120,  # 10 years
             )
         )
         print("✅ Updated: Rythu Bandhu - 12.50% (≤1 year), 14.50% (>1 year)")
-        
+
         # Update Rythu Nathany - 12.50% up to 1 year, 14.50% above
         await db.execute(
             update(LoanTypeConfig)
@@ -70,11 +71,11 @@ async def update_loan_types():
                 default_interest_rate=12.50,
                 min_amount=10000,
                 max_amount=1000000,
-                default_tenure_months=120  # 10 years
+                default_tenure_months=120,  # 10 years
             )
         )
         print("✅ Updated: Rythu Nathany - 12.50% (≤1 year), 14.50% (>1 year)")
-        
+
         # Update Amul Loans - 12% up to 1 year, 14% above (10 months EMI)
         await db.execute(
             update(LoanTypeConfig)
@@ -85,17 +86,17 @@ async def update_loan_types():
                 default_interest_rate=12.0,
                 min_amount=5000,
                 max_amount=500000,
-                default_tenure_months=10  # 10 months
+                default_tenure_months=10,  # 10 months
             )
         )
         print("✅ Updated: Amul Loans - 12% (≤1 year), 14% (>1 year)")
-        
+
         await db.commit()
-        
+
         # Display updated loan types
         result = await db.execute(select(LoanTypeConfig))
         configs = result.scalars().all()
-        
+
         print("\n" + "=" * 80)
         print("📊 UPDATED LOAN TYPES")
         print("=" * 80)

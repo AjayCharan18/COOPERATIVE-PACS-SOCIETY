@@ -3,6 +3,7 @@ Create an admin user in the database
 Run this from the project root: python -c "import sys; sys.path.insert(0, '.'); from scripts.create_admin import create_admin; import asyncio; asyncio.run(create_admin())"
 Or simpler: Add admin directly through database or use the seed_data.py script
 """
+
 import asyncio
 import sys
 import os
@@ -24,19 +25,17 @@ async def create_admin():
         admin_password = "admin123"  # Change this password!
         admin_name = "System Administrator"
         branch_id = 1  # Default branch ID
-        
+
         # Check if admin already exists
-        result = await db.execute(
-            select(User).where(User.email == admin_email)
-        )
+        result = await db.execute(select(User).where(User.email == admin_email))
         existing_admin = result.scalar_one_or_none()
-        
+
         if existing_admin:
             print(f"\n⚠️  Admin user already exists with email: {admin_email}")
             print(f"   Name: {existing_admin.full_name}")
             print(f"   Role: {existing_admin.role.value}")
             return
-        
+
         # Create admin user
         admin = User(
             email=admin_email,
@@ -45,23 +44,23 @@ async def create_admin():
             full_name=admin_name,
             role=UserRole.ADMIN,
             is_active=True,
-            branch_id=branch_id
+            branch_id=branch_id,
         )
-        
+
         db.add(admin)
         await db.commit()
         await db.refresh(admin)
-        
-        print("\n" + "="*80)
+
+        print("\n" + "=" * 80)
         print("✅ ADMIN USER CREATED SUCCESSFULLY")
-        print("="*80)
+        print("=" * 80)
         print(f"\nLogin Credentials:")
         print(f"Email: {admin_email}")
         print(f"Password: {admin_password}")
         print(f"Name: {admin_name}")
         print(f"Role: {admin.role.value}")
         print(f"\n⚠️  IMPORTANT: Change the default password after first login!")
-        print("="*80 + "\n")
+        print("=" * 80 + "\n")
 
 
 if __name__ == "__main__":

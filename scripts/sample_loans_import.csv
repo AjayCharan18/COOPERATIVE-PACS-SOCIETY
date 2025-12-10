@@ -1,0 +1,3 @@
+farmer_email,loan_type_name,principal_amount,interest_rate,tenure_months,disbursement_date,purpose,status
+farmer@dccb.com,SAO,50000,7.0,12,2024-06-15,Crop cultivation - Paddy,active
+farmer@dccb.com,Long Term EMI Loan,200000,9.5,60,2023-01-10,Farm equipment purchase,active

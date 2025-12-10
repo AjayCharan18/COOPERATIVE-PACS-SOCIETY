@@ -1,0 +1,90 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Redis
+dump.rdb
+
+# Node (Frontend)
+node_modules/
+frontend/dist/
+frontend/build/
+
+# Uploads and temporary files
+uploads/
+temp/
+*.tmp
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# SSL certificates
+nginx/ssl/*.pem
+nginx/ssl/*.key
+nginx/ssl/*.crt
+
+# Backup files
+*.bak
+*.backup
+backups/
+frontend/.next/
+frontend/out/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OCR temp files
+ocr_temp/
+uploads/
+
+# ML Models
+*.pkl
+*.joblib
+models/*.h5
+models/*.pb
+
+# Reports
+reports/*.pdf
+reports/*.xlsx

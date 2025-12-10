@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "name": "DCCB Loan Management",
+    "slug": "dccb-loan-mobile",
+    "version": "2.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "jsEngine": "hermes",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "scheme": "dccbloan",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#4CAF50"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.dccb.loanmobile",
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to scan documents and capture loan-related photos.",
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to upload loan documents.",
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to provide branch information and services."
+      },
+      "buildNumber": "1"
+    },
+    "android": {
+      "package": "com.dccb.loanmobile",
+      "versionCode": 1,
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ],
+      "useNextNotificationsApi": true
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 33,
+            "targetSdkVersion": 33,
+            "buildToolsVersion": "33.0.0"
+          },
+          "ios": {
+            "deploymentTarget": "15.1"
+          }
+        }
+      ]
+    ]
+  }
+}

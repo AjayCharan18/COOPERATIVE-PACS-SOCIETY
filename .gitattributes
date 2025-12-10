@@ -1,0 +1,28 @@
+# Normalize all text files
+* text=auto
+
+# Keep shell scripts with LF line endings
+*.sh text eol=lf
+
+# Keep JSON with LF
+*.json text eol=lf
+
+# Keep JS/TS files with LF (for Expo / React Native)
+*.js text eol=lf
+*.jsx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+
+# Images, fonts, and binaries
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.ttf binary
+*.otf binary
+
+# Do not normalize lock files
+package-lock.json -text
+yarn.lock -text

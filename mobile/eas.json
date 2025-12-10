@@ -15,7 +15,7 @@
                 "buildType": "app-bundle"
             },
             "ios": {
-                "bundleIdentifier": "com.dccb.loanmobile"
+                "bundleIdentifier": "com.cooperative.pacs"
             }
         }
     },

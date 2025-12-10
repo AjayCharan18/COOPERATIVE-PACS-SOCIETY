@@ -1,13 +1,13 @@
 #!/bin/bash
 # ========================================
-# DCCB Loan Management - Production Build
+# COOPERATIVE PACS - Production Build
 # ========================================
 
 set -e  # Exit on error
 
 echo ""
 echo "========================================"
-echo " DCCB Loan Management System"
+echo " COOPERATIVE PACS - Loan Management"
 echo " Production Build Script"
 echo "========================================"
 echo ""
@@ -58,7 +58,7 @@ fi
 echo "Creating frontend production config..."
 cat > .env.production << EOF
 VITE_API_BASE_URL=https://api.yourdomain.com/api/v1
-VITE_APP_NAME=DCCB Loan Management
+VITE_APP_NAME=COOPERATIVE PACS
 EOF
 
 echo "Building frontend for production..."

@@ -1,11 +1,11 @@
 @echo off
 REM ========================================
-REM DCCB Loan Management - Production Build
+REM COOPERATIVE PACS - Production Build
 REM ========================================
 
 echo.
 echo ========================================
-echo  DCCB Loan Management System
+echo  COOPERATIVE PACS - Loan Management
 echo  Production Build Script
 echo ========================================
 echo.
@@ -50,7 +50,7 @@ REM Create production env file for frontend
 echo Creating frontend production config...
 (
 echo VITE_API_BASE_URL=https://api.yourdomain.com/api/v1
-echo VITE_APP_NAME=DCCB Loan Management
+echo VITE_APP_NAME=COOPERATIVE PACS
 ) > .env.production
 
 echo Building frontend for production...

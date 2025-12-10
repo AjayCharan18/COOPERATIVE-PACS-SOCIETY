@@ -1,7 +1,7 @@
 {
-  "name": "dccb-loan-mobile",
+  "name": "cooperative-pacs-mobile",
   "version": "2.0.0",
-  "description": "DCCB Loan Management Mobile App for Farmers",
+  "description": "COOPERATIVE PACS Mobile App for Farmers",
   "main": "index.js",
   "scripts": {
     "start": "react-native start",

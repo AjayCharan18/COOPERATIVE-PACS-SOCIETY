@@ -70,7 +70,7 @@ const RegisterScreen = ({ navigation }) => {
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.header}>
                     <Text style={styles.title}>Create Account</Text>
-                    <Text style={styles.subtitle}>Register for DCCB Loan System</Text>
+                    <Text style={styles.subtitle}>Register for COOPERATIVE PACS</Text>
                 </View>
 
                 <View style={styles.form}>

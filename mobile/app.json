@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "DCCB Loan Management",
-    "slug": "dccb-loan-mobile",
+    "name": "COOPERATIVE PACS",
+    "slug": "cooperative-pacs-mobile",
     "version": "2.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -23,7 +23,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.dccb.loanmobile",
+      "bundleIdentifier": "com.cooperative.pacs",
       "infoPlist": {
         "NSCameraUsageDescription": "This app uses the camera to scan documents and capture loan-related photos.",
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to upload loan documents.",
@@ -32,7 +32,7 @@
       "buildNumber": "1"
     },
     "android": {
-      "package": "com.dccb.loanmobile",
+      "package": "com.cooperative.pacs",
       "versionCode": 1,
       "permissions": [
         "CAMERA",

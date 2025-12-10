@@ -1,5 +1,5 @@
 """
-Main FastAPI application entry point for DCCB Loan Management System
+Main FastAPI application entry point for COOPERATIVE PACS - Loan Management System
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

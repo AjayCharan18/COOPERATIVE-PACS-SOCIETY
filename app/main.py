@@ -41,9 +41,9 @@ netlify_origin_regex = r"https://.*\.netlify\.app"
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if allow_all_origins else origins,
-    allow_origin_regex=netlify_origin_regex if not allow_all_origins else None,
-    allow_credentials=False if allow_all_origins else True,
+    allow_origins=["*"],
+    allow_origin_regex=None,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

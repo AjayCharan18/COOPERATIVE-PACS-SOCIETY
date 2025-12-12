@@ -35,10 +35,15 @@ if not isinstance(origins, list):
 if "https://cooperative-pacs-loan-management.netlify.app" not in origins:
     origins.append("https://cooperative-pacs-loan-management.netlify.app")
 
+allow_all_origins = len(origins) == 0
+
+netlify_origin_regex = r"https://.*\.netlify\.app"
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
+    allow_origins=["*"] if allow_all_origins else origins,
+    allow_origin_regex=netlify_origin_regex if not allow_all_origins else None,
+    allow_credentials=False if allow_all_origins else True,
     allow_methods=["*"],
     allow_headers=["*"],
 )

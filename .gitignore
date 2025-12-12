@@ -8,6 +8,7 @@ env/
 # Environment files
 .env
 *.env
+.env.production
 
 # Build / dist
 build/
@@ -16,11 +17,13 @@ dist/
 
 # Node / React Native / Expo
 node_modules/
+frontend/.netlify/
 .expo/
 .expo-shared/
 npm-debug.log*
 yarn-error.log*
-package-lock.json
+/package-lock.json
+!frontend/package-lock.json
 
 # OS & Editor junk
 .DS_Store

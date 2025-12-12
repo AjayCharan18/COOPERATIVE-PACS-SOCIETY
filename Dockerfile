@@ -34,9 +34,10 @@ RUN mkdir -p logs uploads temp
 # Expose port
 EXPOSE 8000
 
-# Health check
+# Health check (uses PORT env var if provided by the host)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8000/health')"
+    CMD sh -c 'curl -f http://localhost:${PORT:-8000}/health || exit 1'
 
-# Run application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+# Run application using shell form so environment variables (PORT, WEB_CONCURRENCY) are expanded
+# Render (and many PaaS) provide a $PORT env var — use it if present, otherwise fallback to 8000.
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers ${WEB_CONCURRENCY:-4}"]

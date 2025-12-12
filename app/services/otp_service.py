@@ -5,6 +5,7 @@ Supports both Email and SMS OTP
 
 import random
 import string
+import json
 from datetime import datetime, timedelta
 from typing import Optional, Dict
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +15,10 @@ from app.models.user import User
 from app.core.config import settings
 import logging
 
+from redis.asyncio import Redis
+from redis.asyncio.client import Redis as RedisClient
+from redis.asyncio import from_url as redis_from_url
+
 logger = logging.getLogger(__name__)
 
 
@@ -22,9 +27,43 @@ class OTPStore:
 
     _otps: Dict[str, Dict] = {}
 
+    _redis: Optional[RedisClient] = None
+
     @classmethod
-    def save_otp(cls, identifier: str, otp: str, expires_in_minutes: int = 10):
+    def _use_redis(cls) -> bool:
+        return bool(settings.REDIS_URL) and settings.ENVIRONMENT != "development"
+
+    @classmethod
+    def _redis_key(cls, identifier: str) -> str:
+        return f"otp:{identifier}"
+
+    @classmethod
+    async def _get_redis(cls) -> Optional[RedisClient]:
+        if not cls._use_redis():
+            return None
+
+        if cls._redis is None:
+            try:
+                cls._redis = redis_from_url(settings.REDIS_URL, decode_responses=True)
+            except Exception:
+                cls._redis = None
+                return None
+        return cls._redis
+
+    @classmethod
+    async def save_otp(cls, identifier: str, otp: str, expires_in_minutes: int = 10):
         """Save OTP with expiration"""
+        if cls._use_redis():
+            redis = await cls._get_redis()
+            if redis is not None:
+                payload = {"otp": otp, "attempts": 0}
+                await redis.set(
+                    cls._redis_key(identifier),
+                    json.dumps(payload),
+                    ex=expires_in_minutes * 60,
+                )
+                return
+
         cls._otps[identifier] = {
             "otp": otp,
             "expires_at": datetime.utcnow() + timedelta(minutes=expires_in_minutes),
@@ -32,8 +71,39 @@ class OTPStore:
         }
 
     @classmethod
-    def verify_otp(cls, identifier: str, otp: str) -> bool:
+    async def verify_otp(cls, identifier: str, otp: str) -> bool:
         """Verify OTP"""
+        if cls._use_redis():
+            redis = await cls._get_redis()
+            if redis is not None:
+                key = cls._redis_key(identifier)
+                raw = await redis.get(key)
+                if not raw:
+                    return False
+
+                try:
+                    stored = json.loads(raw)
+                except Exception:
+                    await redis.delete(key)
+                    return False
+
+                attempts = int(stored.get("attempts", 0))
+                if attempts >= 3:
+                    await redis.delete(key)
+                    return False
+
+                if stored.get("otp") == otp:
+                    await redis.delete(key)
+                    return True
+
+                stored["attempts"] = attempts + 1
+                ttl = await redis.ttl(key)
+                if ttl is None or ttl <= 0:
+                    await redis.delete(key)
+                    return False
+                await redis.set(key, json.dumps(stored), ex=int(ttl))
+                return False
+
         if identifier not in cls._otps:
             return False
 
@@ -58,8 +128,13 @@ class OTPStore:
             return False
 
     @classmethod
-    def delete_otp(cls, identifier: str):
+    async def delete_otp(cls, identifier: str):
         """Delete OTP"""
+        if cls._use_redis():
+            redis = await cls._get_redis()
+            if redis is not None:
+                await redis.delete(cls._redis_key(identifier))
+                return
         if identifier in cls._otps:
             del cls._otps[identifier]
 
@@ -146,7 +221,7 @@ class OTPService:
         otp = OTPService.generate_otp()
 
         # Save OTP
-        OTPStore.save_otp(identifier, otp, expires_in_minutes=10)
+        await OTPStore.save_otp(identifier, otp, expires_in_minutes=10)
 
         # Send OTP
         if method == "email":
@@ -180,7 +255,7 @@ class OTPService:
         from app.core.security import get_password_hash, validate_password_strength
 
         # Verify OTP
-        if not OTPStore.verify_otp(identifier, otp):
+        if not await OTPStore.verify_otp(identifier, otp):
             return {"success": False, "message": "Invalid or expired OTP"}
 
         # Validate password strength
@@ -217,7 +292,7 @@ class OTPService:
     ) -> Dict:
         """Resend OTP"""
         # Delete old OTP
-        OTPStore.delete_otp(identifier)
+        await OTPStore.delete_otp(identifier)
 
         # Send new OTP
         return await OTPService.initiate_password_reset(db, identifier, method)

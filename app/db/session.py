@@ -19,6 +19,8 @@ _engine_kwargs = {
 # connection-level state like prepared statements is not reliable. NullPool avoids
 # reusing DB connections across requests.
 if settings.ENVIRONMENT != "development":
+    # Supabase (and many hosted Postgres providers) require SSL.
+    _engine_kwargs["connect_args"]["ssl"] = "require"
     _engine_kwargs["poolclass"] = NullPool
 else:
     _engine_kwargs["pool_size"] = 10

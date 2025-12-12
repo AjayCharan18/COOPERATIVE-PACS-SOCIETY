@@ -46,7 +46,7 @@ class Settings(BaseSettings):
 
     # CORS
     BACKEND_CORS_ORIGINS: str = Field(
-        default='["http://localhost:3000","http://localhost:5173","http://localhost:5174"]',
+        default='["http://localhost:3000","http://localhost:5173","http://localhost:5174","https://cooperative-pacs-loan-management.netlify.app"]',
         env="BACKEND_CORS_ORIGINS",
     )
 

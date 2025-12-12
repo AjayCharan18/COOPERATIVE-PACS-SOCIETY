@@ -24,7 +24,16 @@ app = FastAPI(
 )
 
 # CORS Configuration
-origins = json.loads(settings.BACKEND_CORS_ORIGINS)
+try:
+    origins = json.loads(settings.BACKEND_CORS_ORIGINS)
+except Exception:
+    origins = []
+
+if not isinstance(origins, list):
+    origins = []
+
+if "https://cooperative-pacs-loan-management.netlify.app" not in origins:
+    origins.append("https://cooperative-pacs-loan-management.netlify.app")
 
 app.add_middleware(
     CORSMiddleware,

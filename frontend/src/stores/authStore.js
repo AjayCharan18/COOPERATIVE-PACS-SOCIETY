@@ -1,8 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import axios from 'axios'
-
-const API_URL = '/api/v1'
+import { api } from '../services/api'
 
 export const useAuthStore = create(
     persist(
@@ -19,7 +18,7 @@ export const useAuthStore = create(
                     formData.append('username', username)
                     formData.append('password', password)
 
-                    const response = await axios.post(`${API_URL}/auth/login`, formData, {
+                    const response = await api.post(`/auth/login`, formData, {
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded'
                         }
@@ -34,7 +33,7 @@ export const useAuthStore = create(
                     axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`
 
                     // Get user info
-                    const userResponse = await axios.get(`${API_URL}/auth/me`)
+                    const userResponse = await api.get(`/auth/me`)
 
                     set({
                         user: userResponse.data,
@@ -67,7 +66,7 @@ export const useAuthStore = create(
 
             register: async (userData) => {
                 try {
-                    await axios.post(`${API_URL}/auth/register`, userData)
+                    await api.post(`/auth/register`, userData)
                     return { success: true }
                 } catch (error) {
                     let errorMessage = 'Registration failed'
@@ -107,7 +106,7 @@ export const useAuthStore = create(
 
             refreshUser: async () => {
                 try {
-                    const response = await axios.get(`${API_URL}/auth/me`)
+                    const response = await api.get(`/auth/me`)
                     set({ user: response.data })
                 } catch (error) {
                     console.error('Failed to refresh user:', error)

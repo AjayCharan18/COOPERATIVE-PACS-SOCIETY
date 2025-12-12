@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-const API_URL = '/api/v1'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+const API_URL = `${API_BASE_URL}/api/v1`
 
 // Create axios instance with base configuration
 export const api = axios.create({
@@ -39,55 +40,55 @@ api.interceptors.response.use(
 export const loanApi = {
     // Get all loans
     getLoans: async (params = {}) => {
-        const response = await axios.get(`${API_URL}/loans`, { params })
+        const response = await api.get(`/loans`, { params })
         return response.data
     },
 
     // Get loan by ID
     getLoan: async (id) => {
-        const response = await axios.get(`${API_URL}/loans/${id}`)
+        const response = await api.get(`/loans/${id}`)
         return response.data
     },
 
     // Search loan by number
     searchLoan: async (loanNumber) => {
-        const response = await axios.get(`${API_URL}/loans/search/${loanNumber}`)
+        const response = await api.get(`/loans/search/${loanNumber}`)
         return response.data
     },
 
     // Create loan
     createLoan: async (loanData) => {
-        const response = await axios.post(`${API_URL}/loans`, loanData)
+        const response = await api.post(`/loans`, loanData)
         return response.data
     },
 
     // Update loan
     updateLoan: async (id, loanData) => {
-        const response = await axios.put(`${API_URL}/loans/${id}`, loanData)
+        const response = await api.put(`/loans/${id}`, loanData)
         return response.data
     },
 
     // Approve loan
     approveLoan: async (approvalData) => {
-        const response = await axios.post(`${API_URL}/loans/approve`, approvalData)
+        const response = await api.post(`/loans/approve`, approvalData)
         return response.data
     },
 
     // Get loan summary
     getLoanSummary: async (params = {}) => {
-        const response = await axios.get(`${API_URL}/loans/summary/statistics`, { params })
+        const response = await api.get(`/loans/summary/statistics`, { params })
         return response.data
     },
 
     // Get risk assessment
     getRiskAssessment: async (loanId) => {
-        const response = await axios.get(`${API_URL}/loans/${loanId}/risk-assessment`)
+        const response = await api.get(`/loans/${loanId}/risk-assessment`)
         return response.data
     },
 
     // Get loan types
     getLoanTypes: async () => {
-        const response = await axios.get(`${API_URL}/loans/config/types`)
+        const response = await api.get(`/loans/config/types`)
         return response.data
     },
 }
@@ -95,19 +96,19 @@ export const loanApi = {
 export const paymentApi = {
     // Get payments
     getPayments: async (params = {}) => {
-        const response = await axios.get(`${API_URL}/payments`, { params })
+        const response = await api.get(`/payments`, { params })
         return response.data
     },
 
     // Create payment
     createPayment: async (paymentData) => {
-        const response = await axios.post(`${API_URL}/payments`, paymentData)
+        const response = await api.post(`/payments`, paymentData)
         return response.data
     },
 
     // Get loan ledger
     getLoanLedger: async (loanId) => {
-        const response = await axios.get(`${API_URL}/payments/ledger/${loanId}`)
+        const response = await api.get(`/payments/ledger/${loanId}`)
         return response.data
     },
 }
@@ -115,13 +116,13 @@ export const paymentApi = {
 export const userApi = {
     // Get current user
     getCurrentUser: async () => {
-        const response = await axios.get(`${API_URL}/auth/me`)
+        const response = await api.get(`/auth/me`)
         return response.data
     },
 
     // Change password
     changePassword: async (passwordData) => {
-        const response = await axios.post(`${API_URL}/auth/change-password`, passwordData)
+        const response = await api.post(`/auth/change-password`, passwordData)
         return response.data
     },
 }

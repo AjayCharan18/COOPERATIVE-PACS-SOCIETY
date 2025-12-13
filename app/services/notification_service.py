@@ -4,6 +4,7 @@ Notification service for SMS, WhatsApp, Email
 
 from typing import Optional, Dict
 from datetime import datetime
+import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import httpx
@@ -22,6 +23,8 @@ from app.models.loan import Loan
 
 class NotificationService:
     """Service for sending notifications"""
+
+    _SEND_TIMEOUT_SECONDS = 10
 
     @staticmethod
     async def send_notification(
@@ -109,15 +112,21 @@ class NotificationService:
             # Return True in development mode for testing
             return True
 
-        from twilio.rest import Client
+        def _send() -> str:
+            from twilio.rest import Client
 
-        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+            client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+            msg = client.messages.create(
+                body=message, from_=settings.TWILIO_PHONE_NUMBER, to=mobile
+            )
+            return msg.sid
 
-        message = client.messages.create(
-            body=message, from_=settings.TWILIO_PHONE_NUMBER, to=mobile
-        )
-
-        return message.sid
+        try:
+            return await asyncio.wait_for(
+                asyncio.to_thread(_send), timeout=NotificationService._SEND_TIMEOUT_SECONDS
+            )
+        except asyncio.TimeoutError:
+            raise TimeoutError("SMS send timed out")
 
     @staticmethod
     async def _send_whatsapp(mobile: str, message: str):
@@ -152,29 +161,41 @@ class NotificationService:
             print(f"Email not configured. Would send to {email}: {subject}")
             return
 
-        import smtplib
-        from email.mime.text import MIMEText
-        from email.mime.multipart import MIMEMultipart
+        def _send() -> None:
+            import smtplib
+            from email.mime.text import MIMEText
+            from email.mime.multipart import MIMEMultipart
 
-        msg = MIMEMultipart("alternative")
-        msg["From"] = (
-            settings.EMAIL_FROM
-            if hasattr(settings, "EMAIL_FROM")
-            else settings.SMTP_USER
-        )
-        msg["To"] = email
-        msg["Subject"] = subject
+            msg = MIMEMultipart("alternative")
+            msg["From"] = (
+                settings.EMAIL_FROM
+                if hasattr(settings, "EMAIL_FROM")
+                else settings.SMTP_USER
+            )
+            msg["To"] = email
+            msg["Subject"] = subject
 
-        # Support both plain text and HTML
-        if "<html>" in body.lower():
-            msg.attach(MIMEText(body, "html"))
-        else:
-            msg.attach(MIMEText(body, "plain"))
+            # Support both plain text and HTML
+            if "<html>" in body.lower():
+                msg.attach(MIMEText(body, "html"))
+            else:
+                msg.attach(MIMEText(body, "plain"))
 
-        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
-            server.starttls()
-            server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-            server.send_message(msg)
+            with smtplib.SMTP(
+                settings.SMTP_HOST,
+                settings.SMTP_PORT,
+                timeout=NotificationService._SEND_TIMEOUT_SECONDS,
+            ) as server:
+                server.starttls()
+                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+                server.send_message(msg)
+
+        try:
+            await asyncio.wait_for(
+                asyncio.to_thread(_send), timeout=NotificationService._SEND_TIMEOUT_SECONDS
+            )
+        except asyncio.TimeoutError:
+            raise TimeoutError("Email send timed out")
 
     @staticmethod
     async def send_email(to_email: str, subject: str, body: str):

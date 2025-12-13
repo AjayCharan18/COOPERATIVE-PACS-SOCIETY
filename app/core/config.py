@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     )  # 0 means non-expiring
 
     # Redis
-    REDIS_URL: str = Field(default="redis://localhost:6379/0", env="REDIS_URL")
+    REDIS_URL: str = Field(default="", env="REDIS_URL")
 
     # AI/Gemini
     GEMINI_API_KEY: str = Field(

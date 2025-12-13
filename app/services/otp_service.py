@@ -57,12 +57,15 @@ class OTPStore:
             redis = await cls._get_redis()
             if redis is not None:
                 payload = {"otp": otp, "attempts": 0}
-                await redis.set(
-                    cls._redis_key(identifier),
-                    json.dumps(payload),
-                    ex=expires_in_minutes * 60,
-                )
-                return
+                try:
+                    await redis.set(
+                        cls._redis_key(identifier),
+                        json.dumps(payload),
+                        ex=expires_in_minutes * 60,
+                    )
+                    return
+                except Exception:
+                    cls._redis = None
 
         cls._otps[identifier] = {
             "otp": otp,
@@ -77,7 +80,11 @@ class OTPStore:
             redis = await cls._get_redis()
             if redis is not None:
                 key = cls._redis_key(identifier)
-                raw = await redis.get(key)
+                try:
+                    raw = await redis.get(key)
+                except Exception:
+                    cls._redis = None
+                    raw = None
                 if not raw:
                     return False
 
@@ -89,19 +96,35 @@ class OTPStore:
 
                 attempts = int(stored.get("attempts", 0))
                 if attempts >= 3:
-                    await redis.delete(key)
+                    try:
+                        await redis.delete(key)
+                    except Exception:
+                        cls._redis = None
                     return False
 
                 if stored.get("otp") == otp:
-                    await redis.delete(key)
+                    try:
+                        await redis.delete(key)
+                    except Exception:
+                        cls._redis = None
                     return True
 
                 stored["attempts"] = attempts + 1
-                ttl = await redis.ttl(key)
-                if ttl is None or ttl <= 0:
-                    await redis.delete(key)
+                try:
+                    ttl = await redis.ttl(key)
+                except Exception:
+                    cls._redis = None
                     return False
-                await redis.set(key, json.dumps(stored), ex=int(ttl))
+                if ttl is None or ttl <= 0:
+                    try:
+                        await redis.delete(key)
+                    except Exception:
+                        cls._redis = None
+                    return False
+                try:
+                    await redis.set(key, json.dumps(stored), ex=int(ttl))
+                except Exception:
+                    cls._redis = None
                 return False
 
         if identifier not in cls._otps:
@@ -133,8 +156,11 @@ class OTPStore:
         if cls._use_redis():
             redis = await cls._get_redis()
             if redis is not None:
-                await redis.delete(cls._redis_key(identifier))
-                return
+                try:
+                    await redis.delete(cls._redis_key(identifier))
+                    return
+                except Exception:
+                    cls._redis = None
         if identifier in cls._otps:
             del cls._otps[identifier]
 

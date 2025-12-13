@@ -22,6 +22,7 @@ class Settings(BaseSettings):
         env="DATABASE_URL",
     )
     DB_SSL_INSECURE: bool = Field(default=False, env="DB_SSL_INSECURE")
+    DB_SSL_CA_CERT_PEM: str = Field(default="", env="DB_SSL_CA_CERT_PEM")
 
     # Security
     SECRET_KEY: str = Field(

@@ -31,14 +31,19 @@ if settings.ENVIRONMENT != "development":
         _engine_kwargs["connect_args"]["ssl"] = insecure_ctx
         print("⚠️  DB_SSL_INSECURE=true: SSL certificate verification is DISABLED")
     else:
-        try:
-            import certifi
+        if getattr(settings, "DB_SSL_CA_CERT_PEM", ""):
+            ctx = ssl.create_default_context()
+            ctx.load_verify_locations(cadata=settings.DB_SSL_CA_CERT_PEM)
+            _engine_kwargs["connect_args"]["ssl"] = ctx
+        else:
+            try:
+                import certifi
 
-            _engine_kwargs["connect_args"]["ssl"] = ssl.create_default_context(
-                cafile=certifi.where()
-            )
-        except Exception:
-            _engine_kwargs["connect_args"]["ssl"] = True
+                _engine_kwargs["connect_args"]["ssl"] = ssl.create_default_context(
+                    cafile=certifi.where()
+                )
+            except Exception:
+                _engine_kwargs["connect_args"]["ssl"] = True
     _engine_kwargs["poolclass"] = NullPool
 else:
     _engine_kwargs["pool_size"] = 10

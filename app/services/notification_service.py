@@ -160,6 +160,11 @@ class NotificationService:
         if not settings.SMTP_USER:
             raise RuntimeError("SMTP is not configured (SMTP_USER is empty)")
 
+        timeout_seconds = int(getattr(settings, "SMTP_TIMEOUT_SECONDS", 30) or 30)
+        use_ssl = bool(getattr(settings, "SMTP_USE_SSL", False)) or int(
+            getattr(settings, "SMTP_PORT", 587)
+        ) == 465
+
         def _send() -> None:
             import smtplib
             from email.mime.text import MIMEText
@@ -180,18 +185,27 @@ class NotificationService:
             else:
                 msg.attach(MIMEText(body, "plain"))
 
-            with smtplib.SMTP(
-                settings.SMTP_HOST,
-                settings.SMTP_PORT,
-                timeout=NotificationService._SEND_TIMEOUT_SECONDS,
-            ) as server:
-                server.starttls()
-                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                server.send_message(msg)
+            if use_ssl:
+                with smtplib.SMTP_SSL(
+                    settings.SMTP_HOST,
+                    settings.SMTP_PORT,
+                    timeout=timeout_seconds,
+                ) as server:
+                    server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+                    server.send_message(msg)
+            else:
+                with smtplib.SMTP(
+                    settings.SMTP_HOST,
+                    settings.SMTP_PORT,
+                    timeout=timeout_seconds,
+                ) as server:
+                    server.starttls()
+                    server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+                    server.send_message(msg)
 
         try:
             await asyncio.wait_for(
-                asyncio.to_thread(_send), timeout=NotificationService._SEND_TIMEOUT_SECONDS
+                asyncio.to_thread(_send), timeout=timeout_seconds
             )
         except asyncio.TimeoutError:
             raise TimeoutError("Email send timed out")

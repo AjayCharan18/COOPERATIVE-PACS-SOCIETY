@@ -72,6 +72,8 @@ class Settings(BaseSettings):
     SMTP_PORT: int = Field(default=587, env="SMTP_PORT")
     SMTP_USER: str = Field(default="", env="SMTP_USER")
     SMTP_PASSWORD: str = Field(default="", env="SMTP_PASSWORD")
+    SMTP_TIMEOUT_SECONDS: int = Field(default=30, env="SMTP_TIMEOUT_SECONDS")
+    SMTP_USE_SSL: bool = Field(default=False, env="SMTP_USE_SSL")
     EMAIL_FROM: str = Field(
         default="COOPERATIVE PACS Loan Alerts <noreply@cooperativepacs.com>",
         env="EMAIL_FROM",

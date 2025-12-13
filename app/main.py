@@ -140,6 +140,31 @@ async def health_db_check():
         )
 
 
+@app.get("/health/env", tags=["Health"])
+async def health_env_check():
+    """Environment diagnostics (sanitized)."""
+    db_host = ""
+    db_port = ""
+    db_name = ""
+    try:
+        db_url = make_url(settings.DATABASE_URL)
+        db_host = db_url.host or ""
+        db_port = str(db_url.port or "")
+        db_name = db_url.database or ""
+    except Exception:
+        pass
+
+    return JSONResponse(
+        status_code=200,
+        content={
+            "environment": settings.ENVIRONMENT,
+            "db_ssl_insecure": settings.DB_SSL_INSECURE,
+            "db": {"host": db_host, "port": db_port, "name": db_name},
+            "timestamp": datetime.utcnow().isoformat(),
+        },
+    )
+
+
 if __name__ == "__main__":
     import uvicorn
 

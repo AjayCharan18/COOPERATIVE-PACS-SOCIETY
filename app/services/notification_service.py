@@ -157,6 +157,33 @@ class NotificationService:
     @staticmethod
     async def _send_email(email: str, subject: str, body: str):
         """Send email via SMTP"""
+        # Prefer HTTPS email provider in production (more reliable on PaaS than SMTP)
+        if getattr(settings, "RESEND_API_KEY", ""):
+            resend_from = getattr(settings, "RESEND_FROM", "") or settings.EMAIL_FROM
+            if not resend_from:
+                raise RuntimeError("RESEND_FROM is required when RESEND_API_KEY is set")
+
+            timeout_seconds = int(getattr(settings, "SMTP_TIMEOUT_SECONDS", 30) or 30)
+            headers = {
+                "Authorization": f"Bearer {settings.RESEND_API_KEY}",
+                "Content-Type": "application/json",
+            }
+            payload = {
+                "from": resend_from,
+                "to": [email],
+                "subject": subject,
+                "html": body,
+            }
+
+            async with httpx.AsyncClient(timeout=timeout_seconds) as client:
+                resp = await client.post(
+                    "https://api.resend.com/emails", headers=headers, json=payload
+                )
+                if resp.status_code >= 400:
+                    raise RuntimeError(f"Resend email failed: {resp.status_code} {resp.text}")
+
+            return True
+
         if not settings.SMTP_USER:
             raise RuntimeError("SMTP is not configured (SMTP_USER is empty)")
 

@@ -21,6 +21,7 @@ class Settings(BaseSettings):
         default="postgresql+asyncpg://postgres:12367@localhost:5433/DCCBLOANMANAGEMENT",
         env="DATABASE_URL",
     )
+    DB_SSL_INSECURE: bool = Field(default=False, env="DB_SSL_INSECURE")
 
     # Security
     SECRET_KEY: str = Field(

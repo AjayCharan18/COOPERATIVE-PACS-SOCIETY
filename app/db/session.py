@@ -24,14 +24,21 @@ if settings.ENVIRONMENT != "development":
     # Supabase (and many hosted Postgres providers) require SSL.
     # asyncpg expects an SSL context or True/False.
     # Using a CA bundle avoids CERTIFICATE_VERIFY_FAILED errors on some PaaS images.
-    try:
-        import certifi
+    if settings.DB_SSL_INSECURE:
+        insecure_ctx = ssl.create_default_context()
+        insecure_ctx.check_hostname = False
+        insecure_ctx.verify_mode = ssl.CERT_NONE
+        _engine_kwargs["connect_args"]["ssl"] = insecure_ctx
+        print("⚠️  DB_SSL_INSECURE=true: SSL certificate verification is DISABLED")
+    else:
+        try:
+            import certifi
 
-        _engine_kwargs["connect_args"]["ssl"] = ssl.create_default_context(
-            cafile=certifi.where()
-        )
-    except Exception:
-        _engine_kwargs["connect_args"]["ssl"] = True
+            _engine_kwargs["connect_args"]["ssl"] = ssl.create_default_context(
+                cafile=certifi.where()
+            )
+        except Exception:
+            _engine_kwargs["connect_args"]["ssl"] = True
     _engine_kwargs["poolclass"] = NullPool
 else:
     _engine_kwargs["pool_size"] = 10

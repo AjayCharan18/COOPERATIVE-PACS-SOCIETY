@@ -650,11 +650,8 @@ async def forgot_password(request: dict, db: AsyncSession = Depends(get_db)):
 
     result = await OTPService.initiate_password_reset(db, identifier, method)
 
-    if not result["success"]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=result["message"]
-        )
-
+    # Always return 200 to avoid account enumeration and to keep the UX consistent.
+    # Frontend can show the message, regardless of whether the user exists or send succeeded.
     return result
 
 
@@ -714,11 +711,7 @@ async def resend_otp(request: dict, db: AsyncSession = Depends(get_db)):
 
     result = await OTPService.resend_otp(db, identifier, method)
 
-    if not result["success"]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=result["message"]
-        )
-
+    # Same reasoning as forgot-password: always return 200 with a safe message.
     return result
 
 

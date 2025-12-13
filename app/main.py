@@ -8,6 +8,8 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from datetime import datetime
 import json
+from sqlalchemy import text
+from sqlalchemy.engine.url import make_url
 
 from app.core.config import settings
 from app.api.v1.api import api_router
@@ -67,6 +69,15 @@ async def startup_event():
 
     print(f"🚀 {settings.APP_NAME} started successfully!")
     print(f"📝 Environment: {settings.ENVIRONMENT}")
+    try:
+        db_url = make_url(settings.DATABASE_URL)
+        db_host = db_url.host or ""
+        db_port = db_url.port or ""
+        db_name = (db_url.database or "")
+        print(f"🗄️  Database: host={db_host} port={db_port} db={db_name}")
+    except Exception:
+        print("🗄️  Database: unable to parse DATABASE_URL")
+
     print(f"📚 API Docs: http://localhost:8000/docs")
 
 
@@ -98,9 +109,35 @@ async def health_check():
             "environment": settings.ENVIRONMENT,
             "timestamp": datetime.utcnow().isoformat(),
             "app": settings.APP_NAME,
-            "services": {"api": "operational", "database": "connected"},
+            "services": {"api": "operational", "database": "unknown"},
         },
     )
+
+
+@app.get("/health/db", tags=["Health"])
+async def health_db_check():
+    """Database connectivity health check."""
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        return JSONResponse(
+            status_code=200,
+            content={
+                "status": "healthy",
+                "database": "connected",
+                "timestamp": datetime.utcnow().isoformat(),
+            },
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "database": "unreachable",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat(),
+            },
+        )
 
 
 if __name__ == "__main__":

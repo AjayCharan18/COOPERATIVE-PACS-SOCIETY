@@ -20,7 +20,8 @@ _engine_kwargs = {
 # reusing DB connections across requests.
 if settings.ENVIRONMENT != "development":
     # Supabase (and many hosted Postgres providers) require SSL.
-    _engine_kwargs["connect_args"]["ssl"] = "require"
+    # asyncpg expects an SSL context or True/False, not a string like "require".
+    _engine_kwargs["connect_args"]["ssl"] = True
     _engine_kwargs["poolclass"] = NullPool
 else:
     _engine_kwargs["pool_size"] = 10

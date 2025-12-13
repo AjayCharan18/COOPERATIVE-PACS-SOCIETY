@@ -197,11 +197,14 @@ class OTPService:
         """
 
         try:
-            await NotificationService.send_email(
+            ok = await NotificationService.send_email(
                 to_email=email, subject=subject, body=message
             )
-            logger.info(f"OTP sent to email: {email}")
-            return True
+            if ok:
+                logger.info(f"OTP sent to email: {email}")
+                return True
+            logger.error(f"Failed to send OTP email (unknown failure): {email}")
+            return False
         except Exception as e:
             logger.error(f"Failed to send OTP email: {str(e)}")
             return False

@@ -158,8 +158,7 @@ class NotificationService:
     async def _send_email(email: str, subject: str, body: str):
         """Send email via SMTP"""
         if not settings.SMTP_USER:
-            print(f"Email not configured. Would send to {email}: {subject}")
-            return
+            raise RuntimeError("SMTP is not configured (SMTP_USER is empty)")
 
         def _send() -> None:
             import smtplib
@@ -196,6 +195,8 @@ class NotificationService:
             )
         except asyncio.TimeoutError:
             raise TimeoutError("Email send timed out")
+
+        return True
 
     @staticmethod
     async def send_email(to_email: str, subject: str, body: str):

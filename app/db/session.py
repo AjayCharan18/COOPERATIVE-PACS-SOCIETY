@@ -2,6 +2,8 @@
 Database session management
 """
 
+import ssl
+
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
@@ -20,8 +22,16 @@ _engine_kwargs = {
 # reusing DB connections across requests.
 if settings.ENVIRONMENT != "development":
     # Supabase (and many hosted Postgres providers) require SSL.
-    # asyncpg expects an SSL context or True/False, not a string like "require".
-    _engine_kwargs["connect_args"]["ssl"] = True
+    # asyncpg expects an SSL context or True/False.
+    # Using a CA bundle avoids CERTIFICATE_VERIFY_FAILED errors on some PaaS images.
+    try:
+        import certifi
+
+        _engine_kwargs["connect_args"]["ssl"] = ssl.create_default_context(
+            cafile=certifi.where()
+        )
+    except Exception:
+        _engine_kwargs["connect_args"]["ssl"] = True
     _engine_kwargs["poolclass"] = NullPool
 else:
     _engine_kwargs["pool_size"] = 10

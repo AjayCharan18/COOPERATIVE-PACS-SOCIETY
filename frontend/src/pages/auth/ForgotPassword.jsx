@@ -21,13 +21,18 @@ export default function ForgotPassword() {
         setLoading(true)
 
         try {
-            await api.post('/auth/forgot-password', {
+            const response = await api.post('/auth/forgot-password', {
                 identifier: formData.identifier,
                 method: method
             })
 
-            toast.success(`OTP sent to your ${method === 'email' ? 'email' : 'mobile number'}`)
-            setStep(2)
+            const { success, message } = response.data || {}
+            if (success) {
+                toast.success(message || `OTP sent to your ${method === 'email' ? 'email' : 'mobile number'}`)
+                setStep(2)
+            } else {
+                toast.error(message || 'Failed to send OTP')
+            }
         } catch (error) {
             toast.error(error.response?.data?.detail || 'Failed to send OTP')
         } finally {
@@ -69,11 +74,17 @@ export default function ForgotPassword() {
     const handleResendOTP = async () => {
         setLoading(true)
         try {
-            await api.post('/auth/resend-otp', {
+            const response = await api.post('/auth/resend-otp', {
                 identifier: formData.identifier,
                 method: method
             })
-            toast.success('OTP resent successfully')
+
+            const { success, message } = response.data || {}
+            if (success) {
+                toast.success(message || 'OTP resent successfully')
+            } else {
+                toast.error(message || 'Failed to resend OTP')
+            }
         } catch (error) {
             toast.error(error.response?.data?.detail || 'Failed to resend OTP')
         } finally {
@@ -107,8 +118,8 @@ export default function ForgotPassword() {
                                     type="button"
                                     onClick={() => setMethod('email')}
                                     className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${method === 'email'
-                                            ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                                            : 'border-gray-300 hover:border-gray-400'
+                                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                                        : 'border-gray-300 hover:border-gray-400'
                                         }`}
                                 >
                                     <EnvelopeIcon className="h-5 w-5" />
@@ -118,8 +129,8 @@ export default function ForgotPassword() {
                                     type="button"
                                     onClick={() => setMethod('sms')}
                                     className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${method === 'sms'
-                                            ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                                            : 'border-gray-300 hover:border-gray-400'
+                                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                                        : 'border-gray-300 hover:border-gray-400'
                                         }`}
                                 >
                                     <DevicePhoneMobileIcon className="h-5 w-5" />

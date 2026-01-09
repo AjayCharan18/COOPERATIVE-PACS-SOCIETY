@@ -25,6 +25,9 @@ app = FastAPI(
     redoc_url="/redoc" if settings.ENVIRONMENT == "development" else None,
 )
 
+# GZip Compression
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
 # CORS Configuration
 try:
     origins = json.loads(settings.BACKEND_CORS_ORIGINS)
@@ -51,9 +54,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# GZip Compression
-app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # Include API router
 app.include_router(api_router, prefix="/api/v1")

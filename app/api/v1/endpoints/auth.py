@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Form
 from fastapi.security import HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_, func, case, and_
+from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 
 from app.db.session import get_db
@@ -532,11 +533,16 @@ async def login(
     Login with email/mobile and password
     Returns JWT access token
     """
-    # Find user by email or mobile
-    result = await db.execute(
-        select(User).where(or_(User.email == username, User.mobile == username))
-    )
-    user = result.scalar_one_or_none()
+    try:
+        result = await db.execute(
+            select(User).where(or_(User.email == username, User.mobile == username))
+        )
+        user = result.scalar_one_or_none()
+    except SQLAlchemyError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database unavailable. Please try again later.",
+        )
 
     if not user or not verify_password(password, user.hashed_password):
         raise HTTPException(
@@ -551,8 +557,14 @@ async def login(
         )
 
     # Update last login
-    user.last_login = datetime.utcnow()
-    await db.commit()
+    try:
+        user.last_login = datetime.utcnow()
+        await db.commit()
+    except SQLAlchemyError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database unavailable. Please try again later.",
+        )
 
     # Create access token
     access_token = create_access_token(

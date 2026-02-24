@@ -18,7 +18,7 @@ _engine_kwargs = {
     "connect_args": {
         "statement_cache_size": 0,
         "prepared_statement_cache_size": 0,
-        "command_timeout": 60,
+        "command_timeout": 120,
         "server_settings": {"application_name": settings.APP_NAME},
     },
 }

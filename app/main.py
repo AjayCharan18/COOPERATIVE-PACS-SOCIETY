@@ -108,24 +108,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
 @app.on_event("startup")
 async def startup_event():
     """Initialize database and services on startup"""
-    # Create tables if not exist (for development and fresh deployments)
-    # In production, use Alembic migrations
-    # Disabled temporarily - tables already exist in database
-    # async with engine.begin() as conn:
-    #     await conn.run_sync(Base.metadata.create_all)
-    # print("✅ Database tables created/verified")
-
     print(f"🚀 {settings.APP_NAME} started successfully!")
-    print(f"📝 Environment: {settings.ENVIRONMENT}")
-    try:
-        db_url = make_url(settings.DATABASE_URL)
-        db_host = db_url.host or ""
-        db_port = db_url.port or ""
-        db_name = (db_url.database or "")
-        print(f"🗄️  Database: host={db_host} port={db_port} db={db_name}")
-    except Exception:
-        print("🗄️  Database: unable to parse DATABASE_URL")
-
     print(f"📚 API Docs: http://localhost:8000/docs")
 
 

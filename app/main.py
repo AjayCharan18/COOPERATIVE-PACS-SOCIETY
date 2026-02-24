@@ -110,10 +110,9 @@ async def startup_event():
     """Initialize database and services on startup"""
     # Create tables if not exist (for development and fresh deployments)
     # In production, use Alembic migrations
-    # Disabled temporarily - tables already exist in database
-    # async with engine.begin() as conn:
-    #     await conn.run_sync(Base.metadata.create_all)
-    # print("✅ Database tables created/verified")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    print("✅ Database tables created/verified")
 
     print(f"🚀 {settings.APP_NAME} started successfully!")
     print(f"📝 Environment: {settings.ENVIRONMENT}")

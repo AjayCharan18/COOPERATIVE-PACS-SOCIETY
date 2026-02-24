@@ -118,6 +118,17 @@ async def shutdown_event():
     print("👋 Shutting down gracefully...")
 
 
+@app.post("/init-db", tags=["Database"])
+async def initialize_database():
+    """Initialize database tables (for first-time setup)"""
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        return {"message": "Database tables created successfully"}
+    except Exception as e:
+        return {"error": f"Failed to create tables: {str(e)}"}
+
+
 @app.get("/", tags=["Root"])
 async def root():
     """Root endpoint"""

@@ -14,10 +14,11 @@ _engine_kwargs = {
     "echo": settings.ENVIRONMENT == "development",
     "future": True,
     "pool_pre_ping": True,
+    "pool_recycle": 300,
     "connect_args": {
         "statement_cache_size": 0,
         "prepared_statement_cache_size": 0,
-        "command_timeout": 30,
+        "command_timeout": 60,
         "server_settings": {"application_name": settings.APP_NAME},
     },
 }
@@ -54,7 +55,7 @@ else:
     _engine_kwargs["pool_size"] = 10
     _engine_kwargs["max_overflow"] = 20
 
-engine = create_async_engine(settings.DATABASE_URL, **_engine_kwargs)
+engine = create_async_engine(settings.DATABASE_URL, pool_timeout=30, pool_reset_on_return='commit', **_engine_kwargs)
 
 # Create async session factory
 AsyncSessionLocal = sessionmaker(

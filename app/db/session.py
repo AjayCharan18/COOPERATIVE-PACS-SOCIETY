@@ -14,7 +14,12 @@ _engine_kwargs = {
     "echo": settings.ENVIRONMENT == "development",
     "future": True,
     "pool_pre_ping": True,
-    "connect_args": {"statement_cache_size": 0, "prepared_statement_cache_size": 0},
+    "connect_args": {
+        "statement_cache_size": 0,
+        "prepared_statement_cache_size": 0,
+        "command_timeout": 30,
+        "server_settings": {"application_name": settings.APP_NAME},
+    },
 }
 
 # When running behind PgBouncer in transaction/statement pooling mode (common on Render),

@@ -523,6 +523,74 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     return user
 
 
+@router.post("/register", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
+async def register(
+    email: str = Form(...),
+    mobile: str = Form(...),
+    password: str = Form(...),
+    full_name: str = Form(...),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Register a new user account
+    """
+    # Check if user already exists
+    try:
+        result = await db.execute(
+            select(User).where(or_(User.email == email, User.mobile == mobile))
+        )
+        existing_user = result.scalar_one_or_none()
+    except SQLAlchemyError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database unavailable. Please try again later.",
+        )
+    
+    if existing_user:
+        if existing_user.email == email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Mobile number already registered"
+            )
+    
+    # Validate password strength
+    is_valid, message = validate_password_strength(password)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=message
+        )
+    
+    # Create new user
+    hashed_password = get_password_hash(password)
+    new_user = User(
+        email=email,
+        mobile=mobile,
+        hashed_password=hashed_password,
+        full_name=full_name,
+        role=UserRole.FARMER,
+        is_active=True,
+        is_verified=False
+    )
+    
+    try:
+        db.add(new_user)
+        await db.commit()
+        await db.refresh(new_user)
+    except SQLAlchemyError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database unavailable. Please try again later.",
+        )
+    
+    return new_user
+
+
 @router.post("/login", response_model=Token)
 async def login(
     username: str = Form(...),

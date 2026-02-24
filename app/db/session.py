@@ -55,7 +55,7 @@ else:
     _engine_kwargs["pool_size"] = 10
     _engine_kwargs["max_overflow"] = 20
 
-engine = create_async_engine(settings.DATABASE_URL, pool_timeout=30, pool_reset_on_return='commit', **_engine_kwargs)
+engine = create_async_engine(settings.DATABASE_URL, **_engine_kwargs)
 
 # Create async session factory
 AsyncSessionLocal = sessionmaker(

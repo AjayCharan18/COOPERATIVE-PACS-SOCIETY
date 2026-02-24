@@ -118,6 +118,42 @@ async def shutdown_event():
     print("👋 Shutting down gracefully...")
 
 
+@app.post("/create-test-user", tags=["Database"])
+async def create_test_user():
+    """Create a test user for quick testing"""
+    try:
+        from app.models.user import User, UserRole
+        from app.core.security import get_password_hash
+        from app.db.session import engine
+        
+        async with engine.begin() as conn:
+            # Check if user already exists
+            from sqlalchemy import select
+            result = await conn.execute(select(User).where(User.email == "adiajay12367@gmail.com"))
+            existing = result.scalar_one_or_none()
+            
+            if existing:
+                return {"message": "User already exists"}
+            
+            # Create user
+            user = User(
+                email="adiajay12367@gmail.com",
+                mobile="1234567890",
+                hashed_password=get_password_hash("Ajay12367@"),
+                full_name="Ajay",
+                role=UserRole.FARMER,
+                is_active=True,
+                is_verified=False
+            )
+            
+            conn.add(user)
+            await conn.commit()
+            
+            return {"message": "Test user created successfully", "email": "adiajay12367@gmail.com", "password": "Ajay12367@"}
+    except Exception as e:
+        return {"error": f"Failed to create user: {str(e)}"}
+
+
 @app.post("/init-db", tags=["Database"])
 async def initialize_database():
     """Initialize database tables (for first-time setup)"""
